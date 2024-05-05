@@ -1,0 +1,106 @@
+# Copyright 2024 Eric Niklas Wolf
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+# internal function for calling scorep-config
+function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
+    message(CHECK_START "Finding Score-P version and prefix")
+    # Avoid querying the version if we've already done that this run.
+    # This is an internal property inspired by the FindGit module and
+    # not stored in the cache because it might change between CMake runs.
+    get_property(cacheProperty GLOBAL PROPERTY _FindScorepP_Cache)
+    if (cacheProperty)
+        list(GET cacheProperty 0 cachedConfigExecutable)
+        list(GET cacheProperty 1 version)
+        list(GET cacheProperty 2 prefix)
+        if (cachedConfigExecutable STREQUAL scorepConfigExecutable AND (NOT version STREQUAL "") AND (NOT prefix STREQUAL ""))
+            message(CHECK_PASS "reusing cached values (version ${version} in ${prefix})")
+            set("${versionVar}" "${version}" PARENT_SCOPE)
+            set("${prefixVar}" "${prefix}" PARENT_SCOPE)
+            return()
+        endif()
+    endif()
+
+    foreach(option version prefix)
+        execute_process(
+            COMMAND "${SCOREP_CONFIG_EXECUTABLE}" "--${option}"
+            RESULT_VARIABLE result
+            OUTPUT_VARIABLE ${option}
+            ERROR_QUIET
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if (NOT result STREQUAL "0")
+            message(CHECK_FAIL "scorep-config failed with result ${result}")
+            return()
+        endif()
+    endforeach()
+    message(CHECK_PASS "found version ${version} in ${prefix}")
+
+    set_property(
+        GLOBAL
+        PROPERTY _FindScorepP_Cache
+        "${scorepConfigExecutable};${version};${prefix}"
+    )
+    set("${versionVar}" "${version}" PARENT_SCOPE)
+    set("${prefixVar}" "${prefix}" PARENT_SCOPE)
+endfunction()
+
+
+message(CHECK_START "finding scorep-config executable")
+find_program(
+    SCOREP_CONFIG_EXECUTABLE
+    NAMES scorep-config
+    DOC "Score-P config exeutable"
+)
+mark_as_advanced(SCOREP_CONFIG_EXECUTABLE)
+
+if (SCOREP_CONFIG_EXECUTABLE)
+    message(CHECK_PASS "found ${SCOREP_CONFIG_EXECUTABLE}")
+    _scorep_determine_config("${SCOREP_CONFIG_EXECUTABLE}" SCOREP_VERSION_STRING __scorepPrefix)
+
+    if (__scorepPrefix) 
+        find_program(
+            SCOREP_EXECUTABLE
+            NAMES scorep
+            PATHS "${__scorepPrefix}/bin"
+            DOC "Score-P exeutable"
+            NO_DEFAULT_PATH
+        )
+        mark_as_advanced(SCOREP_EXECUTABLE)
+    endif()
+    unset(__scorepPrefix)
+
+    get_property(__findScorePRole GLOBAL PROPERTY CMAKE_ROLE)
+    if (__findScorePRole STREQUAL "PROJECT")
+        if (NOT TARGET ScoreP::Config)
+            add_executable(ScoreP::Config IMPORTED)
+            set_property(TARGET ScoreP::Config PROPERTY IMPORTED_LOCATION "${SCOREP_CONFIG_EXECUTABLE}")
+        endif()
+        if (SCOREP_EXECUTABLE AND NOT TARGET ScoreP::ScoreP)
+            add_executable(ScoreP::ScoreP IMPORTED)
+            set_property(TARGET ScoreP::ScoreP PROPERTY IMPORTED_LOCATION "${SCOREP_EXECUTABLE}")
+        endif()
+    endif()
+    unset(__findScorePRole)
+else()
+    message(CHECK_FAIL "not found")
+endif()
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+    ScoreP
+    REQUIRED_VARS SCOREP_EXECUTABLE SCOREP_CONFIG_EXECUTABLE
+    VERSION_VAR SCOREP_VERSION_STRING
+)
