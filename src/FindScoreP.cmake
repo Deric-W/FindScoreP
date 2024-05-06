@@ -14,6 +14,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+include(FindPackageHandleStandardArgs)
+
 # internal function for calling scorep-config
 function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
     if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
@@ -42,7 +44,6 @@ function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
             COMMAND "${SCOREP_CONFIG_EXECUTABLE}" "--${option}"
             RESULT_VARIABLE result
             OUTPUT_VARIABLE ${option}
-            ERROR_QUIET
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
         if (NOT result STREQUAL "0")
@@ -66,12 +67,36 @@ function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
 endfunction()
 
 
+function(_scorep_version_validator resultVariable scorepConfigPath)
+    if (NOT DEFINED ${CMAKE_FIND_PACKAGE_NAME}_FIND_VERSION)
+        set(${resultVariable} TRUE PARENT_SCOPE)
+    else()
+        execute_process(
+            COMMAND "${scorepConfigPath}" --version
+            RESULT_VARIABLE versionResult
+            OUTPUT_VARIABLE version
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if (versionResult STREQUAL "0")
+            find_package_check_version("${version}" versionValid HANDLE_VERSION_RANGE)
+            set(${resultVariable} ${versionValid} PARENT_SCOPE)
+        else()
+            if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+                message(DEBUG "calling ${scorepConfigPath} failed with result ${versionResult}")
+            endif()
+            set(${resultVariable} FALSE PARENT_SCOPE)
+        endif()
+    endif()
+endfunction()
+
+
 if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
     message(CHECK_START "finding scorep-config executable")
 endif()
 find_program(
     SCOREP_CONFIG_EXECUTABLE
     NAMES scorep-config
+    VALIDATOR _scorep_version_validator
     DOC "Score-P config exeutable"
 )
 mark_as_advanced(SCOREP_CONFIG_EXECUTABLE)
@@ -110,9 +135,9 @@ elseif(NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
     message(CHECK_FAIL "not found")
 endif()
 
-include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
     ScoreP
     REQUIRED_VARS SCOREP_EXECUTABLE SCOREP_CONFIG_EXECUTABLE
     VERSION_VAR SCOREP_VERSION_STRING
+    HANDLE_VERSION_RANGE
 )
