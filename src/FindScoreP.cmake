@@ -16,7 +16,9 @@
 
 # internal function for calling scorep-config
 function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
-    message(CHECK_START "Finding Score-P version and prefix")
+    if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+        message(CHECK_START "Finding Score-P version and prefix")
+    endif()
     # Avoid querying the version if we've already done that this run.
     # This is an internal property inspired by the FindGit module and
     # not stored in the cache because it might change between CMake runs.
@@ -26,7 +28,9 @@ function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
         list(GET cacheProperty 1 version)
         list(GET cacheProperty 2 prefix)
         if (cachedConfigExecutable STREQUAL scorepConfigExecutable AND (NOT version STREQUAL "") AND (NOT prefix STREQUAL ""))
-            message(CHECK_PASS "reusing cached values (version ${version} in ${prefix})")
+            if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+                message(CHECK_PASS "reusing cached values (version ${version} in ${prefix})")
+            endif()
             set("${versionVar}" "${version}" PARENT_SCOPE)
             set("${prefixVar}" "${prefix}" PARENT_SCOPE)
             return()
@@ -42,11 +46,15 @@ function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
         if (NOT result STREQUAL "0")
-            message(CHECK_FAIL "scorep-config failed with result ${result}")
+            if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+                message(CHECK_FAIL "scorep-config failed with result ${result}")
+            endif()
             return()
         endif()
     endforeach()
-    message(CHECK_PASS "found version ${version} in ${prefix}")
+    if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+        message(CHECK_PASS "found version ${version} in ${prefix}")
+    endif()
 
     set_property(
         GLOBAL
@@ -58,7 +66,9 @@ function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
 endfunction()
 
 
-message(CHECK_START "finding scorep-config executable")
+if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+    message(CHECK_START "finding scorep-config executable")
+endif()
 find_program(
     SCOREP_CONFIG_EXECUTABLE
     NAMES scorep-config
@@ -67,7 +77,9 @@ find_program(
 mark_as_advanced(SCOREP_CONFIG_EXECUTABLE)
 
 if (SCOREP_CONFIG_EXECUTABLE)
-    message(CHECK_PASS "found ${SCOREP_CONFIG_EXECUTABLE}")
+    if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
+        message(CHECK_PASS "found ${SCOREP_CONFIG_EXECUTABLE}")
+    endif()
     _scorep_determine_config("${SCOREP_CONFIG_EXECUTABLE}" SCOREP_VERSION_STRING __scorepPrefix)
 
     if (__scorepPrefix) 
@@ -94,7 +106,7 @@ if (SCOREP_CONFIG_EXECUTABLE)
         endif()
     endif()
     unset(__findScorePRole)
-else()
+elseif(NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
     message(CHECK_FAIL "not found")
 endif()
 
