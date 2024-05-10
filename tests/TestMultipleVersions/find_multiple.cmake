@@ -1,0 +1,12 @@
+find_package(ScoreP 0.0.0.2 EXACT REQUIRED)
+if (NOT SCOREP_VERSION_STRING STREQUAL "0.0.0.2")
+    message(FATAL_ERROR "found invalid version ${SCOREP_VERSION_STRING}")
+endif()
+
+unset(SCOREP_CONFIG_EXECUTABLE CACHE)
+unset(SCOREP_EXECUTABLE CACHE)
+
+find_package(ScoreP 0.0.0.3 EXACT REQUIRED)
+if (NOT SCOREP_VERSION_STRING STREQUAL "0.0.0.3")
+    message(FATAL_ERROR "found invalid version ${SCOREP_VERSION_STRING}")
+endif()
