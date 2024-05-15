@@ -27,3 +27,8 @@ The find module can handle multiple installed versions and version ranges.
 `SCOREP_CONFIG_EXECUTABLE`, the path of the scorep-config executable.
 
 `SCOREP_VERSION_STRING`, the version of Score-P found.
+
+## Tests
+
+Testing using the [CTest](https://cmake.org/cmake/help/latest/module/CTest.html)
+module requires Score-P and a POSIX compatible shell to be installed.
