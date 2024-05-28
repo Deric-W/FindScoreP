@@ -16,11 +16,8 @@
 
 include(FindPackageHandleStandardArgs)
 
-# internal function for calling scorep-config
+# internal function for calling scorep-config and extracting version and prefix
 function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
-    if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
-        message(CHECK_START "Finding Score-P version and prefix")
-    endif()
     # Avoid querying the version if we've already done that this run.
     # This is an internal property inspired by the FindGit module and
     # not stored in the cache because it might change between CMake runs.
@@ -30,9 +27,6 @@ function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
         list(GET cacheProperty 1 version)
         list(GET cacheProperty 2 prefix)
         if (cachedConfigExecutable STREQUAL scorepConfigExecutable AND (NOT version STREQUAL "") AND (NOT prefix STREQUAL ""))
-            if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
-                message(CHECK_PASS "reusing cached values (version ${version} in ${prefix})")
-            endif()
             set("${versionVar}" "${version}" PARENT_SCOPE)
             set("${prefixVar}" "${prefix}" PARENT_SCOPE)
             return()
@@ -41,21 +35,18 @@ function(_scorep_determine_config scorepConfigExecutable versionVar prefixVar)
 
     foreach(option version prefix)
         execute_process(
-            COMMAND "${SCOREP_CONFIG_EXECUTABLE}" "--${option}"
+            COMMAND "${scorepConfigExecutable}" "--${option}"
             RESULT_VARIABLE result
             OUTPUT_VARIABLE ${option}
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
         if (NOT result STREQUAL "0")
             if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
-                message(CHECK_FAIL "scorep-config failed with result ${result}")
+                message(NOTICE "scorep-config failed with result ${result}")
             endif()
             return()
         endif()
     endforeach()
-    if (NOT ${CMAKE_FIND_PACKAGE_NAME}_FIND_QUIETLY)
-        message(CHECK_PASS "found version ${version} in ${prefix}")
-    endif()
 
     set_property(
         GLOBAL
