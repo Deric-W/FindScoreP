@@ -1,11 +1,8 @@
 #!/bin/sh -e
 
 case $1 in
-    "--version")
-        echo "0.0.0.3"
-        ;;
-    "--prefix")
-        dirname "$(dirname "$0")"
+    "config-summary")
+        echo "Dummy config"
         ;;
     *)
         echo "Invalid dummy arguments" 1>&2
