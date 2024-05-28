@@ -81,3 +81,13 @@ add_test(
     -B "${temporaryDir}/TestTryCompile"
 )
 set_property(TEST "Test Score-P instrumentation during configure phase" PROPERTY FIXTURES_REQUIRED tmpdir)
+
+add_test(
+    NAME "Test handling of components"
+    COMMAND "${CMAKE_COMMAND}" -E env
+    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestMultipleVersions/0.0.0.3"
+    "${CMAKE_COMMAND}"
+    ${TEST_ARGUMENTS}
+    "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+    -P "${CMAKE_CURRENT_LIST_DIR}/find_components.cmake"
+)

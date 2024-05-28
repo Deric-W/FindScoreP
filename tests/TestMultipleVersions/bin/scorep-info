@@ -2,7 +2,8 @@
 
 case $1 in
     "config-summary")
-        echo "Dummy config"
+        echo "Dummy config:"
+        echo "Compiler instrumentation: yes"
         ;;
     *)
         echo "Invalid dummy arguments" 1>&2
