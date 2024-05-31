@@ -74,9 +74,74 @@ macro(_scorep_check_pattern)
     endif()
 endmacro()
 
+# internal macro to handle checking for a component based on a option in some section
+macro(_scorep_check_indented_option sectionRegex optionRegex value)
+    # solving it with one regex was too much for CMake`s regex engine
+    set(patternFailure TRUE)
+    if (configuration MATCHES "(${sectionRegex})")
+        set(indent "${CMAKE_MATCH_2}")
+        # remove everything before and including section header line
+        string(LENGTH "${CMAKE_MATCH_1}" sectionLength)
+        string(FIND "${configuration}" "${CMAKE_MATCH_1}" sectionLocation)
+        math(EXPR sectionStart "${sectionLocation} + ${sectionLength}")
+        string(SUBSTRING "${configuration}" ${sectionStart} -1 section)
+        # while the line is part of the section
+        while(section MATCHES "^\n${indent}[ \t]")
+            if(section MATCHES "^\n${indent}[ \t]+${optionRegex}[ \t]*([^ \t\n]+)")
+                # matching option found, handle escaped newline
+                if(CMAKE_MATCH_1 STREQUAL "\\")
+                    if (section MATCHES "^\n[^\n]*\\\n[ \t]*([^ \t\n]*)")
+                        set(optionValue "${CMAKE_MATCH_1}")
+                    else()
+                        set(optionValue "\\")
+                    endif()
+                else()
+                    set(optionValue "${CMAKE_MATCH_1}")
+                endif()
+                if (optionValue STREQUAL "${value}")
+                    set(patternFailure FALSE)
+                endif()
+                break()
+            else()
+                # remove top line from section
+                string(REGEX MATCH "^\n[^\n]*" line "${section}")
+                string(LENGTH "${line}" lineLength)
+                string(SUBSTRING "${section}" ${lineLength} -1 section)
+            endif()
+        endwhile()
+    endif()
+    if(NOT patternFailure)
+        set("${CMAKE_FIND_PACKAGE_NAME}_${component}_FOUND" TRUE PARENT_SCOPE)
+    elseif(${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED_${component})
+        set(hasComponents FALSE)
+    endif()
+endmacro()
+
+# internal macro to handle checking for a compiler based on a backend
+macro(_scorep_check_compiler backend)
+    if(CMAKE_MATCH_1 STREQUAL "CXX11")
+        set(language "C\\\\+\\\\+11")
+    elseif(CMAKE_MATCH_1 STREQUAL "Fortran77")
+        set(language "Fortran 77")
+    else()
+        set(language ${CMAKE_MATCH_1})
+    endif()
+    _scorep_check_indented_option(
+        "\n([ \t]*)Score\\\\-P \\\\(${backend}backend\\\\):[ \t]*"
+        "${backend}${language} compiler:"
+        "${CMAKE_MATCH_2}"
+    )
+endmacro()
+
 # internal function for calling scorep-info and checking whether required components exists
 # sets _FOUND variables for found components in the parent scope
 function(_scorep_check_components scorepInfoExecutable resultVar)
+    # do not call scorep-info if there are no components to check
+    list(LENGTH "${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS" componentCount)
+    if(componentCount EQUAL 0)
+        set("${resultVar}" TRUE PARENT_SCOPE)
+        return()
+    endif()
     execute_process(
         COMMAND "${scorepInfoExecutable}" "config-summary"
         RESULT_VARIABLE result
@@ -90,8 +155,15 @@ function(_scorep_check_components scorepInfoExecutable resultVar)
         return()
     endif()
     set(hasComponents TRUE)
+    set(compilerLanguages "(C99|CXX11|Fortran|Fortran77)")
     foreach(component ${${CMAKE_FIND_PACKAGE_NAME}_FIND_COMPONENTS})
-        if(component STREQUAL "THREAD_omp")
+        if(component MATCHES "^COMPILER_${compilerLanguages}_(.+)$")
+            _scorep_check_compiler("")
+        elseif(component MATCHES "^MPI_COMPILER_${compilerLanguages}_(.+)$")
+            _scorep_check_compiler("MPI ")
+        elseif(component MATCHES "^SHMEM_COMPILER_${compilerLanguages}_(.+)$")
+            _scorep_check_compiler("SHMEM ")
+        elseif(component STREQUAL "THREAD_omp")
             _scorep_check_pattern(
                 "\n[ \t]*opari2 support:[ \t]*yes"
                 "\n[ \t]*OpenMP ancestry:[ \t]*yes"
@@ -112,20 +184,15 @@ function(_scorep_check_components scorepInfoExecutable resultVar)
             # TODO
         elseif(component MATCHES "^OMP_(C|CXX|Fortran)$")
             if (CMAKE_MATCH_1 STREQUAL "CXX")
-                set(language "C\\+\\+")
+                set(language "C\\\\+\\\\+")
             else()
                 set(language ${CMAKE_MATCH_1})
             endif()
-            if (configuration MATCHES "\n([ \t]*)OpenMP support:[ \t]*yes")
-                set(indent "${CMAKE_MATCH_1}")
-                if (configuration MATCHES "\n${indent}OpenMP support:[ \t]*yes(\n${indent}[ \t]+[^\n]*)*\n${indent}[ \t]+${language} support:[ \t]*yes")
-                    set("${CMAKE_FIND_PACKAGE_NAME}_${component}_FOUND" TRUE PARENT_SCOPE)
-                    continue()
-                endif()
-            endif()
-            if (${CMAKE_FIND_PACKAGE_NAME}_FIND_REQUIRED_${component})
-                set(hasComponents FALSE)
-            endif()
+            _scorep_check_indented_option(
+                "\n([ \t]*)OpenMP support:[ \t]*yes[ \t]*"
+                "${language} support:"
+                "yes,"
+            )
         elseif(component STREQUAL "PDT")
             _scorep_check_pattern("\n[ \t]*PDT support:[ \t]*yes")
         elseif(component STREQUAL "OPENCL")

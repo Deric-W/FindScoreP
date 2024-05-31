@@ -14,6 +14,48 @@ The find module can handle multiple installed versions and version ranges.
 
 ### Components
 
+`COMPILER_<LANGUAGE>_<PATH>`, representing the compiler suite used by Score-P.
+
+Possible values for LANGUAGE:
+
+ - C99
+
+ - CXX11
+
+ - Fortran
+
+ - Fortran77
+
+PATH contains the path to the requested compiler executable.
+
+`MPI_COMPILER_<LANGUAGE>_<PATH>`, representing the MPI compiler suite used by Score-P.
+
+Possible values for LANGUAGE:
+
+ - C99
+
+ - CXX11
+
+ - Fortran
+
+ - Fortran77
+
+PATH contains the path to the requested compiler executable.
+
+`SHMEM_COMPILER_<LANGUAGE>_<PATH>`, representing the SHMEM compiler suite used by Score-P.
+
+Possible values for LANGUAGE:
+
+ - C99
+
+ - CXX11
+
+ - Fortran
+
+ - Fortran77
+
+PATH contains the path to the requested compiler executable.
+
 `THREAD_<PARADIGM>`, representing thread support.
 
 Possible values for PARADIGM:
