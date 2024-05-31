@@ -8,13 +8,13 @@ project(
 
 find_package(ScoreP REQUIRED)
 
-foreach(variable SCOREP_FOUND SCOREP_EXECUTABLE SCOREP_CONFIG_EXECUTABLE SCOREP_VERSION_STRING)
+foreach(variable SCOREP_FOUND SCOREP_EXECUTABLE SCOREP_CONFIG_EXECUTABLE SCOREP_INFO_EXECUTABLE SCOREP_VERSION_STRING)
     if (NOT DEFINED ${variable})
         message(FATAL_ERROR "variable ${variable} is not defined")
     endif()
 endforeach()
 
-foreach(target ScoreP::ScoreP ScoreP::Config)
+foreach(target ScoreP::ScoreP ScoreP::Config ScoreP::Info)
     if (NOT TARGET ${target})
         message(FATAL_ERROR "target ${target} is not defined")
     endif()
