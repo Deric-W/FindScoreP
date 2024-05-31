@@ -222,6 +222,7 @@ if (SCOREP_CONFIG_EXECUTABLE)
             NAMES scorep-info
             PATHS "${__scorepPrefix}/bin"
             DOC "Score-P info executable"
+            NO_DEFAULT_PATH
         )
         mark_as_advanced(SCOREP_INFO_EXECUTABLE)
     endif()
