@@ -5,7 +5,10 @@ project(
     LANGUAGES C
 )
 
+include(ScorePUtilities)
+scorep_mark_instrumented()
 find_package(ScoreP REQUIRED)
+scorep_enable()
 
 try_run(
     exitCode
