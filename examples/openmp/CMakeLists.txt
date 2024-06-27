@@ -20,3 +20,8 @@ if(ENABLE_SCOREP)
     find_package(ScoreP REQUIRED COMPONENTS ${scorepComponents})
     scorep_enable()
 endif()
+
+include(CTest)
+if (BUILD_TESTING)
+    add_subdirectory(tests)
+endif()

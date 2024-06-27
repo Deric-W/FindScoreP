@@ -238,4 +238,18 @@ Possible values for LANG:
 ## Tests
 
 Testing using the [CTest](https://cmake.org/cmake/help/latest/module/CTest.html)
-module requires Score-P and a POSIX compatible shell to be installed.
+module requires a POSIX compatible shell to be installed.
+
+The following labels exist:
+
+ - `cmake`, indicating a CMake-only test
+
+ - `scorep`, indicating a test requiring Score-P
+
+ - `c`, indicating a test requiring a C compiler
+
+ - `openmp`, indicating a test requiring OpenMP
+
+ - `boost`, indicating a test requiring certain boost components
+
+ - `examples`, indicating a test building code examples
