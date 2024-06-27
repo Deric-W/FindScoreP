@@ -111,27 +111,28 @@ set_property(TEST "Test ScorePUtilities detecting all targets" PROPERTY FIXTURES
 set_property(TEST "Test ScorePUtilities detecting all targets" PROPERTY LABELS cmake)
 
 function(_add_example_tests example labels)
-add_test(
+    add_test(
         NAME "Test ${example} example without Score-P"
-    COMMAND "${CMAKE_CTEST_COMMAND}"
+        COMMAND "${CMAKE_CTEST_COMMAND}"
         --build-and-test "${CMAKE_SOURCE_DIR}/examples/${example}" "${temporaryDir}/${example}/without"
-    --build-generator "${CMAKE_GENERATOR}"
-    --build-options --fresh "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
-    --test-command "${CMAKE_CTEST_COMMAND}"
-)
+        --build-generator "${CMAKE_GENERATOR}"
+        --build-options --fresh "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+        --test-command "${CMAKE_CTEST_COMMAND}"
+    )
     set_property(TEST "Test ${example} example without Score-P" PROPERTY FIXTURES_REQUIRED tmpdir)
     set_property(TEST "Test ${example} example without Score-P" PROPERTY LABELS examples ${labels})
 
-add_test(
+    add_test(
         NAME "Test ${example} example with Score-P"
-    COMMAND "${CMAKE_CTEST_COMMAND}"
+        COMMAND "${CMAKE_CTEST_COMMAND}"
         --build-and-test "${CMAKE_SOURCE_DIR}/examples/${example}" "${temporaryDir}/${example}/with"
-    --build-generator "${CMAKE_GENERATOR}"
+        --build-generator "${CMAKE_GENERATOR}"
         --build-options --fresh "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src" "-DENABLE_SCOREP=ON"
-    --test-command "${CMAKE_CTEST_COMMAND}"
-)
+        --test-command "${CMAKE_CTEST_COMMAND}"
+    )
     set_property(TEST "Test ${example} example with Score-P" PROPERTY FIXTURES_REQUIRED tmpdir)
     set_property(TEST "Test ${example} example with Score-P" PROPERTY LABELS examples scorep ${labels})
 endfunction()
 
 _add_example_tests(openmp "openmp;boost")
+_add_example_tests(pthread "pthread;boost")

@@ -250,6 +250,8 @@ The following labels exist:
 
  - `openmp`, indicating a test requiring OpenMP
 
+ - `pthread`, indicating a test requiring pthreads
+
  - `boost`, indicating a test requiring certain boost components
 
  - `examples`, indicating a test building code examples
