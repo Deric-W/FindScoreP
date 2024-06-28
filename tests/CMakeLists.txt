@@ -136,3 +136,4 @@ endfunction()
 
 _add_example_tests(openmp "openmp;boost")
 _add_example_tests(pthread "pthread;boost")
+_add_example_tests(openacc "openacc;boost")

@@ -244,13 +244,15 @@ The following labels exist:
 
  - `cmake`, indicating a CMake-only test
 
- - `scorep`, indicating a test requiring Score-P
+ - `scorep`, indicating a test requiring Score-P (with supported components based on the other labels)
 
  - `c`, indicating a test requiring a C compiler
 
  - `openmp`, indicating a test requiring OpenMP
 
  - `pthread`, indicating a test requiring pthreads
+
+ - `openacc`, indicating a test requiring OpenACC
 
  - `boost`, indicating a test requiring certain boost components
 
