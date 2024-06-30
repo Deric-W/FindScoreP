@@ -24,9 +24,13 @@ if(ENABLE_SCOREP)
         message(FATAL_ERROR "fibonacci target has not been configured with ${scorep} as compiler and linker launcher")
     endif()
 
+    set(expectedComponents IO_posix COMPILER KOKKOS OMPT OMP_CXX)
+    if(CMAKE_CXX_COMPILER)
+        list(APPEND expectedComponents "COMPILER_CXX11_${CMAKE_CXX_COMPILER}")
+    endif()
     _check_lists_equal("${compilerLauncherArgs}" "--io=posix;--compiler;--kokkos;--thread=omp:ompt")
     _check_lists_equal("${linkerLauncherArgs}" "--io=posix;--compiler;--kokkos;--thread=omp:ompt")
-    _check_lists_equal("${scorepComponents}" "IO_posix;COMPILER;KOKKOS;OMPT;OMP_CXX")
+    _check_lists_equal("${scorepComponents}" "${expectedComponents}")
 
     add_test(
         NAME "Check that Score-P results are generated"

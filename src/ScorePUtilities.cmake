@@ -272,10 +272,32 @@ function(_scorep_arguments2components arguments lang result)
 endfunction()
 
 
+function(_scorep_detect_components components language result)
+    set(detectedComponents "")
+    if(language STREQUAL C)
+        set(scorepLanguage "C99")
+    elseif(language STREQUAL CXX)
+        set(scorepLanguage "CXX11")
+    elseif(language STREQUAL Fortran)
+        set(scorepLanguage "Fortran")
+    else()
+        set("${result}" "${detectedComponents}" PARENT_SCOPE)
+        return()
+    endif()
+    if(CMAKE_${language}_COMPILER)
+        list(APPEND detectedComponents "COMPILER_${scorepLanguage}_${CMAKE_${language}_COMPILER}")
+    endif()
+    if(MPI_${language}_COMPILER)
+        list(APPEND detectedComponents "MPI_COMPILER_${scorepLanguage}_${MPI_${language}_COMPILER}")
+    endif()
+    set("${result}" "${detectedComponents}" PARENT_SCOPE)
+endfunction()
+
+
 function(scorep_required_components outVar)
     cmake_parse_arguments(
         ARG
-        ""
+        "AUTO"
         ""
         "DIRECTORIES;TARGETS"
         ${ARGN}
@@ -290,17 +312,25 @@ function(scorep_required_components outVar)
     list(REMOVE_DUPLICATES ARG_TARGETS)
 
     set(components "")
+    set(languages "")
     foreach(target ${ARG_TARGETS})
-        get_target_property(languages "${target}" SCOREP_LANGUAGES)
-        if(languages STREQUAL "languages-NOTFOUND")
+        get_target_property(targetLanguages "${target}" SCOREP_LANGUAGES)
+        if(targetLanguages STREQUAL "targetLanguages-NOTFOUND")
             continue()
         endif()
-        foreach(lang ${languages})
+        list(APPEND languages ${targetLanguages})
+        foreach(lang ${targetLanguages})
             get_target_property(arguments "${target}" SCOREP_${lang}_ARGUMENTS)
             _scorep_arguments2components("${arguments}" "${lang}" languageComponents)
             list(APPEND components ${languageComponents})
         endforeach()
     endforeach()
+    if(ARG_AUTO)
+        foreach(lang ${languages})
+            _scorep_detect_components("${components}" "${lang}" detectedComponents)
+            list(APPEND components ${detectedComponents})
+        endforeach()
+    endif()
     list(REMOVE_DUPLICATES components)
     set("${outVar}" "${components}" PARENT_SCOPE)
 endfunction()

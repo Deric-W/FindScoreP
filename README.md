@@ -89,6 +89,12 @@ and does by itself nothing besides setting the `SCOREP_LANGUAGES` and `SCOREP_<L
 
  - `TARGETS`, a multi-value keyword which lists targets which should be checked
 
+ - `AUTO`, an option that when enabled adds the following components (for each instrumented or MPI language):
+
+   - `COMPILER_<LANGUAGE>_<PATH>`
+
+   - `MPI_COMPILER_<LANGUAGE>_<PATH>`
+
 The function defaults to the current directory if no directories or targets are passed.
 
 `scorep_enable()`, which instruments targets marked by `scorep_mark_instrumented` and supports the following keywords:
@@ -250,7 +256,7 @@ The following labels exist:
 
  - `cmake`, indicating a CMake-only test
 
- - `scorep`, indicating a test requiring Score-P (with supported components based on the other labels)
+ - `scorep`, indicating a test requiring Score-P (with supported components based on the other labels and the compiler selected by CMake)
 
  - `c`, indicating a test requiring a C compiler
 
@@ -265,3 +271,5 @@ The following labels exist:
  - `boost`, indicating a test requiring certain boost components
 
  - `examples`, indicating a test building code examples
+
+The C++ compiler used for compiling examples can be selected with `-DCMAKE_CXX_COMPILER=...`.

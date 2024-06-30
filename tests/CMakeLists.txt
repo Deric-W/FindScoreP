@@ -122,12 +122,17 @@ function(_add_example_tests example labels)
     set_property(TEST "Test ${example} example without Score-P" PROPERTY FIXTURES_REQUIRED tmpdir)
     set_property(TEST "Test ${example} example without Score-P" PROPERTY LABELS examples ${labels})
 
+    if(CMAKE_CXX_COMPILER)
+        set(compiler "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
+    else()
+        set(compiler "")
+    endif()
     add_test(
         NAME "Test ${example} example with Score-P"
         COMMAND "${CMAKE_CTEST_COMMAND}"
         --build-and-test "${CMAKE_SOURCE_DIR}/examples/${example}" "${temporaryDir}/${example}/with"
         --build-generator "${CMAKE_GENERATOR}"
-        --build-options --fresh "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src" "-DENABLE_SCOREP=ON"
+        --build-options --fresh "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src" "-DENABLE_SCOREP=ON" ${compiler}
         --test-command "${CMAKE_CTEST_COMMAND}"
     )
     set_property(TEST "Test ${example} example with Score-P" PROPERTY FIXTURES_REQUIRED tmpdir)
