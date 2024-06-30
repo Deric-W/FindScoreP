@@ -63,4 +63,5 @@ find_package(
     "OPENACC"
     "MEMORY"
     "LIBWRAP"
+    "HIP"
 )

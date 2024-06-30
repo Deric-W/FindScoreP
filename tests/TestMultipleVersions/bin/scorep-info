@@ -58,10 +58,10 @@ Configuration summary:
         libnvidia-ml found:     no
         CUDA version:           unknown
         nvcc works:             no
-      HIP support:              no
-        libamdhip64 found:      no
-        libroctracer64 found:   no
-        librocm_smi64 found:    no
+      HIP support:              yes
+        libamdhip64 found:      yes
+        libroctracer64 found:   yes
+        librocm_smi64 found:    yes
       OpenACC support:          yes, with compiler flag
       Kokkos support:           no, configure with --enable-shared
       Mount point extraction:   yes

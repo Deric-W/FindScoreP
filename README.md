@@ -76,6 +76,8 @@ This function ignores the `SCOREP_LANGUAGES` and `SCOREP_ARGUMENTS` properties a
 
    - `--openacc`
 
+   - `--hip`
+
 The function defaults to the current directory if no directories or targets are passed
 and does by itself nothing besides setting the `SCOREP_LANGUAGES` and `SCOREP_<LANG>_ARGUMENTS` properties.
 
@@ -210,6 +212,8 @@ Possible values for LANG:
 `MEMORY`, representing memory usage instrumentation support.
 
 `LIBWRAP`, representing library wrapper support
+
+`HIP`, representing HIP support.
 
 ### Imported Targets
 
