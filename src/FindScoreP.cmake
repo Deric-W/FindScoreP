@@ -163,12 +163,7 @@ function(_scorep_check_components scorepInfoExecutable resultVar)
             _scorep_check_compiler("MPI ")
         elseif(component MATCHES "^SHMEM_COMPILER_${compilerLanguages}_(.+)$")
             _scorep_check_compiler("SHMEM ")
-        elseif(component STREQUAL "THREAD_omp")
-            _scorep_check_pattern(
-                "\n[ \t]*opari2 support:[ \t]*yes"
-                "\n[ \t]*OpenMP ancestry:[ \t]*yes"
-            )
-        elseif(component STREQUAL "THREAD_pthread")
+        elseif(component STREQUAL "PTHREAD")
             _scorep_check_pattern("\n[ \t]*Pthread support:[ \t]*yes")
         elseif(component STREQUAL "MPP_mpi")
             _scorep_check_pattern("\n[ \t]*Score-P \\\\(MPI backend\\\\):")
@@ -193,6 +188,13 @@ function(_scorep_check_components scorepInfoExecutable resultVar)
                 "${language} support:"
                 "yes,"
             )
+        elseif(component STREQUAL "OPARI2")
+            _scorep_check_pattern(
+                "\n[ \t]*opari2 support:[ \t]*yes"
+                "\n[ \t]*OpenMP ancestry:[ \t]*yes"
+            )
+        elseif(component STREQUAL "OMPT")
+            _scorep_check_pattern("\n[ \t]*OMPT support:[ \t]*yes")
         elseif(component STREQUAL "PDT")
             _scorep_check_pattern("\n[ \t]*PDT support:[ \t]*yes")
         elseif(component STREQUAL "OPENCL")

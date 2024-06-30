@@ -73,8 +73,16 @@ Configuration summary:
         Fortran support:        yes, recognizing -fopenmp --openmp
         OpenMP pomp_tpd:        yes
         OpenMP ancestry:        yes
-      OMPT support:             no
-        OMPT header:            no
+      OMPT support:             yes
+        OMPT header:            yes
+        OMPT tool:              yes
+        OMPT C support:         yes
+        OMPT C++ support:       yes
+        OMPT critical checks passed: \
+                                yes
+        OMPT remediable checks passed: \
+                                no, wrong_test_lock_mutex, missing_work_loop_schedule detected
+        OMPT is default:        no
       PDT support:              yes
       Timer support:            yes, providing gettimeofday, clock_gettime(CLOCK_MONOTONIC_RAW), tsc (X86_64)
         Timer LDFLAGS:          -lm

@@ -165,13 +165,7 @@ Possible values for LANGUAGE:
 
 PATH contains the path to the requested compiler executable.
 
-`THREAD_<PARADIGM>`, representing thread support.
-
-Possible values for PARADIGM:
-
- - omp
-
- - pthread
+`PTHREADS`, representing pthread support.
 
 `MPP_<PARADIGM>`, representing multi-process support.
 
@@ -202,6 +196,10 @@ Possible values for LANG:
  - CXX
 
  - Fortran
+
+`OPARI2`, representing OPARI2 instrumentation support.
+
+`OMPT`, representing OMPT instrumentation support.
 
 `PDT`, representing PDT instrumentation support.
 

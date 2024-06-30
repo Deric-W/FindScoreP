@@ -26,7 +26,7 @@ if(ENABLE_SCOREP)
 
     _check_lists_equal("${compilerLauncherArgs}" "--io=posix;--compiler;--thread=omp;--openmp")
     _check_lists_equal("${linkerLauncherArgs}" "--io=posix;--compiler;--thread=omp;--openmp")
-    _check_lists_equal("${scorepComponents}" "IO_posix;COMPILER;THREAD_omp;OMP_CXX")
+    _check_lists_equal("${scorepComponents}" "IO_posix;COMPILER;OMP_CXX")
 
     add_test(
         NAME "Check that Score-P results are generated"
