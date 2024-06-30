@@ -63,5 +63,6 @@ find_package(
     "OPENACC"
     "MEMORY"
     "LIBWRAP"
+    "KOKKOS"
     "HIP"
 )

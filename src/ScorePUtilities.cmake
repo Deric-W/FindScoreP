@@ -100,6 +100,31 @@ function(_scorep_detect_arguments target language arguments result)
         "--openacc"
         "^--noopenacc$"
     )
+    _scorep_check_argument_target(
+        "Kokkos_FOUND"
+        "Kokkos::kokkos"
+        "--kokkos"
+        "^--nokokkos$"
+    )
+    _scorep_check_argument_target(
+        "Kokkos_ENABLE_OPENMP"
+        "Kokkos::kokkos"
+        "--thread=omp:ompt"
+        "^--thread=pthread$"
+        "^--thread=omp:opari2$"
+    )
+    _scorep_check_argument_target(
+        "Kokkos_ENABLE_CUDA"
+        "Kokkos::kokkos"
+        "--cuda"
+        "^--nocuda$"
+    )
+    _scorep_check_argument_target(
+        "Kokkos_ENABLE_HIP"
+        "Kokkos::kokkos"
+        "--hip"
+        "^--nohip$"
+    )
     set("${result}" "${arguments}" PARENT_SCOPE)
 endfunction()
 
@@ -237,6 +262,8 @@ function(_scorep_arguments2components arguments lang result)
             list(APPEND components OPENACC)
         elseif(argument STREQUAL "--memory")
             list(APPEND components MEMORY)
+        elseif(argument STREQUAL "--kokkos")
+            list(APPEND components KOKKOS)
         elseif(argument STREQUAL "--hip")
             list(APPEND components HIP)
         endif()

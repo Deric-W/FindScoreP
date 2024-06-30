@@ -76,6 +76,8 @@ This function ignores the `SCOREP_LANGUAGES` and `SCOREP_ARGUMENTS` properties a
 
    - `--openacc`
 
+   - `--kokkos`
+
    - `--hip`
 
 The function defaults to the current directory if no directories or targets are passed
@@ -212,6 +214,8 @@ Possible values for LANG:
 `MEMORY`, representing memory usage instrumentation support.
 
 `LIBWRAP`, representing library wrapper support
+
+`KOKKOS`, representing Kokkos support
 
 `HIP`, representing HIP support.
 

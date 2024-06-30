@@ -63,7 +63,7 @@ Configuration summary:
         libroctracer64 found:   yes
         librocm_smi64 found:    yes
       OpenACC support:          yes, with compiler flag
-      Kokkos support:           no, configure with --enable-shared
+      Kokkos support:           yes
       Mount point extraction:   yes
       Lustre stripe info support: \\
                                 no, missing lustre/lustreapi.h header
