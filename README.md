@@ -260,6 +260,8 @@ The following labels exist:
 
  - `openacc`, indicating a test requiring OpenACC
 
+ - `kokkos`, indicating a test requiring Kokkos with an enabled OpenMP backend
+
  - `boost`, indicating a test requiring certain boost components
 
  - `examples`, indicating a test building code examples
