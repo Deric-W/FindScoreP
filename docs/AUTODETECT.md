@@ -67,7 +67,8 @@ Autodetection for each argument is disabled when a conflicting argument is alrea
 
 ## Components
 
-The following paragraphs list all automatically detected components for the find module and the arguments which trigger them.
+The following paragraphs list all automatically detected components for the find module
+and the Score-P arguments or CMake variables which trigger them.
 
 Some arguments are regular expressions to signify that multiple arguments are matched.
 
