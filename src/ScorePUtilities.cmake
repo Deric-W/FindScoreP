@@ -129,49 +129,6 @@ function(scorep_infer_arguments target language arguments result)
 endfunction()
 
 
-function(scorep_instrument target)
-    cmake_parse_arguments(
-        ARG
-        "OVERRIDE;AUTO"
-        ""
-        "LANGS;ARGUMENTS"
-        ${ARGN}
-    )
-
-    if(NOT (DEFINED ScoreP_FOUND AND TARGET ScoreP::ScoreP))
-        message(FATAL_ERROR "Score-P: called 'scorep_instrument' before finding ScoreP")
-        return()
-    endif()
-    get_target_property(scorep ScoreP::ScoreP IMPORTED_LOCATION)
-    foreach(lang ${ARG_LANGS})
-        get_target_property(existingLauncher "${target}" ${lang}_COMPILER_LAUNCHER)
-        if (NOT (ARG_OVERRIDE OR existingLauncher STREQUAL "existingLauncher-NOTFOUND"))
-            message(
-                FATAL_ERROR
-                "Score-P: target ${target} has ${lang}_COMPILER_LAUNCHER already set to ${existingLauncher}"
-                "Please check that the target in not already instrumented by something or unset the property."
-            )
-        endif()
-        get_target_property(existingLauncher "${target}" ${lang}_LINKER_LAUNCHER)
-        if (NOT (ARG_OVERRIDE OR existingLauncher STREQUAL "existingLauncher-NOTFOUND"))
-            message(
-                FATAL_ERROR
-                "Score-P: target ${target} has ${lang}_LINKER_LAUNCHER already set to ${existingLauncher}"
-                "Please check that the target in not already instrumented by something or unset the property."
-            )
-        endif()
-        if(ARG_AUTO)
-            scorep_infer_arguments("${target}" "${lang}" "${ARG_ARGUMENTS}" targetLauncher)
-            list(PREPEND targetLauncher "${scorep}")
-        else()
-            set(targetLauncher "${scorep}" ${ARG_ARGUMENTS})
-        endif()
-        set_target_properties("${target}" PROPERTIES ${lang}_COMPILER_LAUNCHER "${targetLauncher}")
-        set_target_properties("${target}" PROPERTIES ${lang}_LINKER_LAUNCHER "${targetLauncher}")
-    endforeach()
-endfunction()
-
-
 # Internal function listing all targets in a directory
 # https://stackoverflow.com/a/62311397/9986220
 function(_scorep_get_all_targets directory var)
@@ -189,6 +146,68 @@ macro(_scorep_get_all_targets_recursive targets dir)
     get_property(current_targets DIRECTORY "${dir}" PROPERTY BUILDSYSTEM_TARGETS)
     list(APPEND ${targets} ${current_targets})
 endmacro()
+
+
+function(scorep_instrument)
+    cmake_parse_arguments(
+        ARG
+        "OVERRIDE;AUTO;OVERRIDE_VARIABLES"
+        ""
+        "LANGS;ARGUMENTS;DIRECTORIES;TARGETS"
+        ${ARGN}
+    )
+    if(NOT (DEFINED ScoreP_FOUND AND TARGET ScoreP::ScoreP))
+        message(FATAL_ERROR "Score-P: called 'scorep_instrument' before finding ScoreP")
+        return()
+    endif()
+    if(NOT (DEFINED ARG_DIRECTORIES OR DEFINED ARG_TARGETS))
+        set(ARG_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}")
+    endif()
+    foreach(directory ${ARG_DIRECTORIES})
+        _scorep_get_all_targets("${directory}" directoryTargets)
+        list(APPEND ARG_TARGETS ${directoryTargets})
+    endforeach()
+    list(REMOVE_DUPLICATES ARG_TARGETS)
+    get_target_property(scorep ScoreP::ScoreP IMPORTED_LOCATION)
+    foreach(target ${ARG_TARGETS})
+        if(NOT ARG_OVERRIDE_VARIABLES AND DEFINED "SCOREP_LANGUAGES_${target}")
+            set(languages "${SCOREP_LANGUAGES_${target}}")
+        else()
+            set(languages ${ARG_LANGS})
+        endif()
+        foreach(lang ${languages})
+            get_target_property(existingLauncher "${target}" ${lang}_COMPILER_LAUNCHER)
+            if (NOT (ARG_OVERRIDE OR existingLauncher STREQUAL "existingLauncher-NOTFOUND"))
+                message(
+                    FATAL_ERROR
+                    "Score-P: target ${target} has ${lang}_COMPILER_LAUNCHER already set to ${existingLauncher}"
+                    "Please check that the target in not already instrumented by something or unset the property."
+                )
+            endif()
+            get_target_property(existingLauncher "${target}" ${lang}_LINKER_LAUNCHER)
+            if (NOT (ARG_OVERRIDE OR existingLauncher STREQUAL "existingLauncher-NOTFOUND"))
+                message(
+                    FATAL_ERROR
+                    "Score-P: target ${target} has ${lang}_LINKER_LAUNCHER already set to ${existingLauncher}"
+                    "Please check that the target in not already instrumented by something or unset the property."
+                )
+            endif()
+            if(NOT ARG_OVERRIDE_VARIABLES AND DEFINED "SCOREP_${lang}_ARGUMENTS_${target}")
+                set(arguments "${SCOREP_${lang}_ARGUMENTS_${target}}")
+            else()
+                set(arguments ${ARG_ARGUMENTS})
+            endif()
+            if(ARG_AUTO)
+                scorep_infer_arguments("${target}" "${lang}" "${arguments}" targetLauncher)
+                list(PREPEND targetLauncher "${scorep}")
+            else()
+                set(targetLauncher "${scorep}" ${arguments})
+            endif()
+            set_target_properties("${target}" PROPERTIES ${lang}_COMPILER_LAUNCHER "${targetLauncher}")
+            set_target_properties("${target}" PROPERTIES ${lang}_LINKER_LAUNCHER "${targetLauncher}")
+        endforeach()
+    endforeach()
+endfunction()
 
 
 function(scorep_mark_instrumented)
@@ -340,7 +359,7 @@ endfunction()
 function(scorep_enable)
     cmake_parse_arguments(
         ARG
-        "OVERRIDE"
+        "OVERRIDE;OVERRIDE_VARIABLES"
         ""
         "DIRECTORIES;TARGETS"
         ${ARGN}
@@ -355,7 +374,7 @@ function(scorep_enable)
     list(REMOVE_DUPLICATES ARG_TARGETS)
 
     foreach(target ${ARG_TARGETS})
-        if(DEFINED "SCOREP_LANGUAGES_${target}")
+        if(NOT ARG_OVERRIDE_VARIABLES AND DEFINED "SCOREP_LANGUAGES_${target}")
             set(languages "${SCOREP_LANGUAGES_${target}}")
         else()
             get_target_property(languages "${target}" SCOREP_LANGUAGES)
@@ -364,15 +383,15 @@ function(scorep_enable)
             endif()
         endif()
         foreach(lang ${languages})
-            if(DEFINED "SCOREP_${lang}_ARGUMENTS_${target}")
+            if(NOT ARG_OVERRIDE_VARIABLES AND DEFINED "SCOREP_${lang}_ARGUMENTS_${target}")
                 set(arguments "${SCOREP_${lang}_ARGUMENTS_${target}}")
             else()
                 get_target_property(arguments "${target}" SCOREP_${lang}_ARGUMENTS)
             endif()
             if(ARG_OVERRIDE)
-                scorep_instrument("${target}" LANGS ${lang} ARGUMENTS ${arguments} OVERRIDE)
+                scorep_instrument(TARGETS "${target}" LANGS ${lang} ARGUMENTS ${arguments} OVERRIDE_VARIABLES OVERRIDE)
             else()
-                scorep_instrument("${target}" LANGS ${lang} ARGUMENTS ${arguments})
+                scorep_instrument(TARGETS "${target}" LANGS ${lang} ARGUMENTS ${arguments} OVERRIDE_VARIABLES)
             endif()
         endforeach()
     endforeach()

@@ -4,9 +4,13 @@
 
 After including the `ScorePUtilities` module the following functions are available:
 
-### scorep_instrument(target)
+### scorep_instrument()
 
-Configures a target to be instrumented by Score-P and supports the following keywords:
+Configures targets to be instrumented by Score-P and supports the following keywords:
+
+ - `DIRECTORIES`, a multi-value keyword which lists directories in which all targets should be instrumented
+
+ - `TARGETS`, a multi-value keyword which lists targets which should be instrumented
 
  - `OVERRIDE`, an option that when enabled allows overwriting existing `<LANG>_COMPILER_LAUNCHER` and `<LANG>_LINKER_LAUNCHER` properties
 
@@ -16,7 +20,9 @@ Configures a target to be instrumented by Score-P and supports the following key
 
  - `AUTO`, an option which enables automatic detection of Score-P arguments using `scorep_infer_arguments`
 
-This function ignores the `SCOREP_LANGUAGES` and `SCOREP_ARGUMENTS` properties and is intended to be used through `scorep_enable`.
+ - `OVERRIDE_VARIABLES`, an option which disables processing of `SCOREP_LANGUAGES_<TARGET>` and `SCOREP_<LANG>_ARGUMENTS_<TARGET>`
+
+The function defaults to the current directory if no directories or targets are passed.
 
 ### scorep_mark_instrumented()
 
@@ -30,7 +36,7 @@ Marks targets to be instrumented when calling `scorep_enable` and supports the f
 
  - `ARGUMENTS`, a multi-value keyword which lists the commandline arguments to Score-P
 
- - `AUTO`, an option which enables automatic detectionof Score-P arguments using `scorep_infer_arguments`
+ - `AUTO`, an option which enables automatic detection of Score-P arguments using `scorep_infer_arguments`
 
 The function defaults to the current directory if no directories or targets are passed
 and does by itself nothing besides setting the `SCOREP_LANGUAGES` and `SCOREP_<LANG>_ARGUMENTS` properties.
@@ -56,6 +62,8 @@ Instruments targets marked by `scorep_mark_instrumented` and supports the follow
  - `TARGETS`, a multi-value keyword which lists targets which should be checked
 
  - `OVERRIDE`, an option that when enabled allows overwriting existing `<LANG>_COMPILER_LAUNCHER` and `<LANG>_LINKER_LAUNCHER` properties
+
+ - `OVERRIDE_VARIABLES`, an option which disables processing of `SCOREP_LANGUAGES_<TARGET>` and `SCOREP_<LANG>_ARGUMENTS_<TARGET>`
 
 The function defaults to the current directory if no directories or targets are passed.
 
