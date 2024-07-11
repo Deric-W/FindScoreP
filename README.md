@@ -14,7 +14,10 @@ CMake integration for [Score-P](https://score-p.org).
 
 4. Call `scorep_enable` to enable Score-P instrumentation.
 
-  - it is advised to call `find_package(ScoreP)` and `scorep_enable` based on an option for a flexible build configuration 
+  - it is advised to call `find_package(ScoreP)` and `scorep_enable` based on an option for a flexible build configuration
+
+  - if you don't want to vendor the `ScorePUtilities` module it should only be included
+    when the option is enabled and its used functions replaced with dummies otherwise
 
 ### Examples
 

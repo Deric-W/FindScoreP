@@ -5,16 +5,22 @@ project(
     LANGUAGES CXX
 )
 
-include(ScorePUtilities)
 find_package(Boost "1.74" REQUIRED COMPONENTS "program_options")
 find_package(OpenMP REQUIRED)
+
+option(ENABLE_SCOREP "Enable Score-P instrumentation" OFF)
+if(ENABLE_SCOREP)
+    include(ScorePUtilities)
+else()
+    function(scorep_mark_instrumented)
+    endfunction()
+endif()
 
 add_executable(fibonacci "fibonacci.cpp")
 target_link_libraries(fibonacci PRIVATE Boost::program_options)
 target_link_libraries(fibonacci PRIVATE OpenMP::OpenMP_CXX)
 scorep_mark_instrumented(TARGETS fibonacci LANGS CXX ARGUMENTS "--compiler" AUTO)
 
-option(ENABLE_SCOREP "Enable Score-P instrumentation" OFF)
 if(ENABLE_SCOREP)
     scorep_required_components(scorepComponents AUTO)
     find_package(ScoreP REQUIRED COMPONENTS ${scorepComponents})

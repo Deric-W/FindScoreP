@@ -116,7 +116,7 @@ function(_add_example_tests example labels)
         COMMAND "${CMAKE_CTEST_COMMAND}"
         --build-and-test "${CMAKE_SOURCE_DIR}/examples/${example}" "${temporaryDir}/${example}/without"
         --build-generator "${CMAKE_GENERATOR}"
-        --build-options --fresh "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+        --build-options --fresh
         --test-command "${CMAKE_CTEST_COMMAND}"
     )
     set_property(TEST "Test ${example} example without Score-P" PROPERTY FIXTURES_REQUIRED tmpdir)
