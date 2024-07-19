@@ -1,10 +1,18 @@
 # ScorePUtilities Module
 
-## Functions
+This module implements two ways of instrumenting targets with Score-P.
 
-After including the `ScorePUtilities` module the following functions are available:
+The low-level interface allows you to have direct control over how Score-P is executed
+at the cost of convenience.
 
-### scorep_instrument()
+The high-level interface allows infering Score-P arguments and detecting conflicts
+at the cost of sometimes needing a little help.
+
+## Low-level interface
+
+### Functions
+
+#### scorep_instrument()
 
 Configures targets to be instrumented by Score-P and supports the following keywords:
 
@@ -24,38 +32,88 @@ Configures targets to be instrumented by Score-P and supports the following keyw
 
 The function defaults to the current directory if no directories or targets are passed.
 
-### scorep_mark_instrumented()
+**`find_package(ScoreP ...)` has to be executed successfully before this function can be used!**
 
-Marks targets to be instrumented when calling `scorep_enable` and supports the following keywords:
+### Properties
 
- - `DIRECTORIES`, a multi-value keyword which lists directories in which all targets should be instrumented
+ - `SCOREP_LANGUAGES_<TARGET>`, a cache variable which may override the `SCOREP_LANGUAGES` property of a target.
 
- - `TARGETS`, a multi-value keyword which lists targets which should be instrumented
+ - `SCOREP_<LANG>_ARGUMENTS_<TARGET>`, a cache variable which may override the `SCOREP_<LANG>_ARGUMENTS` property of a target.
 
- - `LANGS`, a multi-value keyword which lists the names of the languages to instrument
+The cache variables are intended to be set by users who wish to override which and how targets are instrumented when calling `scorep_enable`.
+
+
+## High-level interface
+
+### Functions
+
+#### scorep_mark(mode)
+
+Marks targets for the high-level interface:
+
+ - mode `HINT` sets setting properties on the targets but does not mark them to be instrumented
+
+ - mode `INSTRUMENT` additionally marks the targets to be instrumented
+
+The function supports the following keywords:
+
+ - `DIRECTORIES`, a multi-value keyword which lists directories in which all targets should be marked
+
+ - `TARGETS`, a multi-value keyword which lists targets which should be marked
+
+ - `LANGS`, a multi-value keyword which lists the names of the languages to mark
 
  - `ARGUMENTS`, a multi-value keyword which lists the commandline arguments to Score-P
 
- - `AUTO`, an option which enables automatic detection of Score-P arguments using `scorep_infer_arguments`
+ - `PRIORITY`, a single-value keyword which takes the priority of the settings set by this call
+
+ - `AUTO`, an option which enables automatic detection of Score-P arguments using `scorep_infer_arguments` with priority 1500
 
 The function defaults to the current directory if no directories or targets are passed
-and does by itself nothing besides setting the `SCOREP_LANGUAGES` and `SCOREP_<LANG>_ARGUMENTS` properties.
+and does by itself nothing besides setting the `SCOREP_LANGUAGES` and `SCOREP_<LANG>_SETTING_<SETTING>` properties.
 
-### scorep_required_components(outVar)
+The priority passed to `PRIORITY` supports in addition to numerical values:
 
-Stores the components required for the instrumentation of targets marked by `scorep_mark_instrumented` in outVar and supports the following keywords:
+ - `OPTIONAL`, alias for 1000
+
+ - `DEFAULT`, alias for 100
+
+ - `FORCE`, alias for 0
+
+#### scorep_determine_instrumentations()
+
+Determines which and how targets marked by `scorep_mark` need to be instrumented.
+
+The functions supports the following keywords:
 
  - `DIRECTORIES`, a multi-value keyword which lists directories in which all targets should be checked
 
  - `TARGETS`, a multi-value keyword which lists targets which should be checked
 
- - `AUTO`, an option which enables automatic detection of components using `scorep_infer_components`
+ - `COMPONENTS_VAR`, a single-value keyword which takes the variable in which the required components for the find module are stored.
 
 The function defaults to the current directory if no directories or targets are passed.
 
-### scorep_enable()
+The passed targets are filtered so that only targets which can be instrumented individually
+by Score-P (shared and module libraries and executables) remain.
 
-Instruments targets marked by `scorep_mark_instrumented` and supports the following keywords:
+For each of these targets the set of transitive link dependencies is calculated while excluding
+dependencies which are linked to through targets which can be instrumented individually by Score-P.
+
+Since the top level and all Score-P enabled targets of a set have to use the same Score-P settings
+they are merged for each set.
+
+If a Score-P enabled target is contained in different sets having different Score-P settings a CMake error is generated.
+
+The Score-P arguments determined for each Score-P enabled target are stored in the `SCOREP_<LANG>_ARGUMENTS` target property.
+
+**Since generator expressions can not be evaluated dependencies specified by them are ignored!**
+
+#### scorep_enable()
+
+Instruments targets marked by `scorep_mark` using `scorep_instrument` based on the `SCOREP_<LANG>_ARGUMENTS` target property.
+
+The function supports the following keywords:
 
  - `DIRECTORIES`, a multi-value keyword which lists directories in which all targets should be checked
 
@@ -67,15 +125,92 @@ Instruments targets marked by `scorep_mark_instrumented` and supports the follow
 
 The function defaults to the current directory if no directories or targets are passed.
 
-### scorep_infer_arguments(target language arguments outVar)
+**`find_package(ScoreP ...)` has to be executed successfully before this function can be used!**
 
-Infers Score-P arguments for instrumenting a specific language of a target while avoiding conflicts with existing arguments.
+### Properties
 
-The result will be stored in the variable name contained in `outVar` as a list of additional arguments.
+ - `SCOREP_LANGUAGES`, a target property which when defined contains all languages to be instrumented when calling `scorep_enable`.
+
+ - `SCOREP_<LANG>_ARGUMENTS`, a target property which when defined contains the determined arguments for Score-P
+
+ - `SCOREP_<LANG>_SETTING_<SETTING>`, a target property which contains the value of a certain Score-P setting when instrumenting language LANG.
+
+#### Setting properties
+
+All setting properties contain their value prefixed by `<PRIORITY>;`,
+where the priority is a non-negative number specifying the priority
+of this setting when being merged with other settings.
+
+If there are multiple values available for a setting the values with
+the highest priority (smallest number) are selected.
+
+If there are still multiple values remaining they are attempted to be merged,
+which causes a CMake error if not possible.
+
+##### Choice settings
+
+For the settings `thread`, `mpp` and `mutex` the value of the property `SCOREP_<LANG>_SETTING_<SETTING>`
+has the form of `<PRIORITY>;<PARADIGM>[;<VARIANT>]`:
+
+ - `PRIORITY` is the priority of this value
+
+ - `PARADIGM` is the choosen instrumentation paradigm
+
+ - `VARIANT` is an option variant of the selected paradigm
+
+Merging of two values (as lists `PARADIGM;VARIANT`) is possible when one is a prefix of the other,
+in which case the longer list is used as the choosen value.
+
+Example: merging `omp;ompt` with `omp` succeeds, while merging with `pthread` or `none` fails.
+
+##### Flag settings
+
+For the settings `compiler`, `cuda`, `online-access`, `pomp`, `openmp`, `pdt`, `preprocess`,
+`user`, `opencl`, `openacc`, `kokkos` and `memory` the value of the property `SCOREP_<LANG>_SETTING_<SETTING>`
+has the form of `<PRIORITY>;STATUS[;<SEPERATOR>;<PAYLOAD>]`:
+
+ - `PRIORITY` is the priority of this value
+
+ - `STATUS`, is the choice whether this setting is enabled or not
+
+ - `SEPERATOR`, is an optional value used for seperating the flag and its payload
+
+ - `PAYLOAD`, is an optional value associated with this setting when enabled
+
+Merging of two values (as lists `STATUS;PAYLOAD`) is possible when one is a prefix of the other,
+in which case the longer list is used as the choosen value.
+
+##### Union settings
+
+For the settings `io` and `other` the value of the property `SCOREP_<LANG>_SETTING_<SETTING>` has the form of `<PRIORITY>;VALUE`:
+
+ - `PRIORITY` is the priority of this value
+
+ - `VALUE`, is a list of values for this setting.
+
+Merging two values (as lists of values) is always possible and results in concatenating the value lists.
+
+The values of the `io` setting are given to `--io=` while the values of `other` are given directly to Score-P
+as command line arguments.
+
+
+## Utility functions
+
+These function work independently of the low- or high-level interfaces and can be used with both.
+
+### Functions
+
+#### scorep_infer_arguments(target language arguments outVar)
+
+Infers Score-P arguments for instrumenting a specific language of a target and merging them with existing arguments.
+
+The result will be stored in the variable name contained in `outVar` as a list containing the new arguments.
+
+To handle conflicts between inferred arguments override them with your own.
 
 For more information on argument autodetection see [AUTODETECT.md](AUTODETECT.md#Arguments).
 
-### scorep_arguments2components(arguments language outVar)
+#### scorep_arguments2components(arguments language outVar)
 
 Get components required to be present when finding Score-P based of the arguments and language of a target.
 
@@ -83,25 +218,10 @@ The result will be stored in the variable name contained in `outVar` as a list o
 
 For more information on component autodetection see [AUTODETECT.md](AUTODETECT.md#Components).
 
-### scorep_infer_components(language outVar)
+#### scorep_infer_components(language outVar)
 
 Get components required to be present when finding Score-P based on current CMake variables.
 
 The result will be stored in the variable name contained in `outVar` as a list of components.
 
 For more information on component autodetection see [AUTODETECT.md](AUTODETECT.md#Components).
-
-
-## Properties
-
-The `ScorePUtilities` module uses or defines the following properties:
-
- - `SCOREP_LANGUAGES`, a target property which when contains all languages to be instrumented when calling `scorep_enable`.
-
- - `SCOREP_<LANG>_ARGUMENTS`, a target property which contains command line arguments to Score-P for instrumenting language LANG.
-
- - `SCOREP_LANGUAGES_<TARGET>`, a cache variable which may override the `SCOREP_LANGUAGES` property of a target.
-
- - `SCOREP_<LANG>_ARGUMENTS_<TARGET>`, a cache variable which may override the `SCOREP_<LANG>_ARGUMENTS` property of a target.
-
-The cache variables are intended to be set by users who wish to override which and how targets are instrumented when calling `scorep_enable`.

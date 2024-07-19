@@ -14,6 +14,10 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+set(_SCOREP_FLAG_SETTINGS compiler cuda online-access pomp openmp pdt preprocess user opencl openacc memory kokkos)
+set(_SCOREP_CHOICE_SETTINGS thread mpp mutex)
+set(_SCOREP_UNION_SETTINGS io other)
+
 
 function(_scorep_list_find_regex lst regex result)
     set(index 0)
@@ -27,107 +31,140 @@ function(_scorep_list_find_regex lst regex result)
     set("${result}" -1 PARENT_SCOPE)
 endfunction()
 
-macro(_scorep_check_argument_target defined target args)
-    if(${defined} AND TARGET "${target}")
-        list(FIND libraries "${target}" index)
-        if(NOT index EQUAL -1)
-            _scorep_list_find_regex("${arguments}" "${ARGN}" index)
-            if(index EQUAL -1)
-                list(APPEND arguments ${args})
+# Internal function which determines the link dependencies of a target.
+# The vicitor function is called for each target and passed a dependency and variable name.
+# By setting this variable to FALSE in the parent scope the current target will be ignored.
+function(_scorep_determine_link_dependencies target visitor result)
+    get_target_property(directLibraries "${target}" LINK_LIBRARIES)
+    if(directLibraries STREQUAL "directLibraries-NOTFOUND")
+        set(directLibraries "")
+    endif()
+    set(pendingLibraries "")
+    set(scannedLibraries "")
+    foreach(library ${directLibraries})
+        set(expand TRUE)
+        cmake_language(CALL "${visitor}" "${library}" expand)
+        if(expand)
+            list(APPEND pendingLibraries "${library}")
+        endif()
+    endforeach()
+    while(NOT pendingLibraries STREQUAL "")
+        list(POP_BACK pendingLibraries library)
+        list(APPEND scannedLibraries "${library}")
+        if(TARGET "${library}")
+            get_target_property(indirectLibraries "${library}" INTERFACE_LINK_LIBRARIES)
+            if(indirectLibraries STREQUAL "indirectLibraries-NOTFOUND")
+                continue()
             endif()
+            foreach(indirectLibrary ${indirectLibraries})
+                set(expand TRUE)
+                cmake_language(CALL "${visitor}" "${indirectLibrary}" expand)
+                if(NOT expand)
+                    continue()
+                endif()
+                list(FIND scannedLibraries "${indirectLibrary}" index)
+                if(NOT index EQUAL -1)
+                    continue()
+                endif()
+                list(FIND pendingLibraries "${indirectLibrary}" index)
+                if(index EQUAL -1)
+                    list(APPEND pendingLibraries "${indirectLibrary}")
+                endif()
+            endforeach()
         endif()
-    endif()
-endmacro()
-
-function(scorep_infer_arguments target language arguments result)
-    get_target_property(libraries "${target}" LINK_LIBRARIES)
-    if(libraries STREQUAL "libraries-NOTFOUND")
-        set("${result}" "" PARENT_SCOPE)
-        return()
-    endif()
-
-    _scorep_check_argument_target(
-        "OpenMP_${language}_FOUND"
-        "OpenMP::OpenMP_${language}"
-        "--thread=omp"
-        "^--thread="
-    )
-    _scorep_check_argument_target(
-        "CMAKE_USE_PTHREADS_INIT"
-        "Threads::Threads"
-        "--thread=pthread"
-        "^--thread="
-    )
-    _scorep_check_argument_target(
-        "MPI_${language}_FOUND"
-        "MPI::MPI_${language}"
-        "--mpp=mpi"
-        "^--mpp="
-    )
-    if(UNIX)
-        _scorep_list_find_regex("${arguments}" "^--io=" index)
-        if(index EQUAL -1)
-            list(APPEND arguments "--io=posix")
-        endif()
-    endif()
-    if(language STREQUAL CUDA)
-        list(FIND arguments "--nocuda" index)
-        if(index EQUAL -1)
-            list(APPEND arguments "--cuda")
-        endif()
-    endif()
-    if(language STREQUAL HIP)
-        list(FIND arguments "--nohip" index)
-        if(index EQUAL -1)
-            list(APPEND arguments "--hip")
-        endif()
-    endif()
-    _scorep_check_argument_target(
-        "OpenMP_${language}_FOUND"
-        "OpenMP::OpenMP_${language}"
-        "--openmp"
-        "^--noopenmp$"
-    )
-    _scorep_check_argument_target(
-        "OpenCL_FOUND"
-        "OpenCL::OpenCL"
-        "--opencl"
-        "^--noopencl$"
-    )
-    _scorep_check_argument_target(
-        "OpenACC_${language}_FOUND"
-        "OpenACC::OpenACC_${language}"
-        "--openacc"
-        "^--noopenacc$"
-    )
-    _scorep_check_argument_target(
-        "Kokkos_FOUND"
-        "Kokkos::kokkos"
-        "--kokkos"
-        "^--nokokkos$"
-    )
-    _scorep_check_argument_target(
-        "Kokkos_ENABLE_OPENMP"
-        "Kokkos::kokkos"
-        "--thread=omp:ompt"
-        "^--thread=pthread$"
-        "^--thread=omp:opari2$"
-    )
-    _scorep_check_argument_target(
-        "Kokkos_ENABLE_CUDA"
-        "Kokkos::kokkos"
-        "--cuda"
-        "^--nocuda$"
-    )
-    _scorep_check_argument_target(
-        "Kokkos_ENABLE_HIP"
-        "Kokkos::kokkos"
-        "--hip"
-        "^--nohip$"
-    )
-    set("${result}" "${arguments}" PARENT_SCOPE)
+    endwhile()
+    set("${result}" "${scannedLibraries}" PARENT_SCOPE)
 endfunction()
 
+# Internal function which determines all transitive link dependencies of a target.
+# The vicitor function is called for each target and passed a dependency and variable name.
+# By setting this variable to FALSE in the parent scope the current target will be ignored.
+function(_scorep_determine_link_closure target visitor result)
+    _scorep_determine_link_dependencies("${target}" "${visitor}" directDependencies)
+    set(pendingDependencies "${directDependencies}")
+    set(scannedDependencies "")
+    while(NOT pendingDependencies STREQUAL "")
+        list(POP_BACK pendingDependencies dependency)
+        list(APPEND scannedDependencies "${dependency}")
+        if(TARGET "${dependency}")
+            _scorep_determine_link_dependencies("${dependency}" "${visitor}" directDependencies)
+            foreach(directDependency ${directDependencies})
+                list(FIND scannedDependencies "${directDependency}" index)
+                if(NOT index EQUAL -1)
+                    continue()
+                endif()
+                list(FIND pendingDependencies "${directDependency}" index)
+                if(index EQUAL -1)
+                    list(APPEND pendingDependencies "${directDependency}")
+                endif()
+            endforeach()
+        endif()
+    endwhile()
+    set("${result}" "${scannedDependencies}" PARENT_SCOPE)
+endfunction()
+
+function(_scorep_all_visitor dependency variable)
+endfunction()
+
+function(_scorep_not_standalone_visitor dependency variable)
+    if(TARGET "${dependency}")
+        get_target_property(type "${dependency}" TYPE)
+        if(type STREQUAL "EXECUTABLE" OR type STREQUAL "SHARED_LIBRARY" OR type STREQUAL "MODULE_LIBRARY")
+            set("${variable}" FALSE PARENT_SCOPE)
+        endif()
+    endif()
+endfunction()
+
+# Internal function which converts a language and set CMake Variables into Score-P setting variables with a prefix.
+function(_scorep_environment2settings language priority prefix)
+    foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+        set("SETTING_${setting}" "")
+    endforeach()
+    if(UNIX)
+        set("SETTING_io" "${priority};posix")
+    endif()
+    if(language STREQUAL "CUDA")
+        set("SETTING_cuda" "${priority};TRUE")
+    elseif(language STREQUAL "HIP")
+        set("SETTING_hip" "${priority};TRUE")
+    endif()
+    foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+        set("${prefix}_${setting}" "${SETTING_${setting}}" PARENT_SCOPE)
+    endforeach()
+endfunction()
+
+# Internal function which converts a dependency into Score-P setting variables with a prefix.
+function(_scorep_link_dependency2settings dependency language priority prefix)
+    foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+        set("SETTING_${setting}" "")
+    endforeach()
+    if(DEFINED "OpenMP_${language}_FOUND" AND dependency STREQUAL "OpenMP::OpenMP_${language}")
+        set("SETTING_thread" "${priority};omp")
+    elseif(DEFINED "CMAKE_USE_PTHREADS_INIT" AND dependency STREQUAL "Threads::Threads")
+        set("SETTING_thread" "${priority};pthread")
+    elseif(DEFINED "MPI_${language}_FOUND" AND dependency STREQUAL "MPI::MPI_${language}")
+        set("SETTING_mpp" "${priority};mpi")
+    elseif(DEFINED "OpenCL_FOUND" AND dependency STREQUAL "OpenCL::OpenCL")
+        set("SETTING_opencl" "${priority};TRUE")
+    elseif(DEFINED "OpenACC_${language}_FOUND" AND dependency STREQUAL "OpenACC::OpenACC_${language}")
+        set("SETTING_openacc" "${priority};TRUE")
+    elseif(dependency STREQUAL "Kokkos::kokkos")
+        set("SETTING_kokkos" "${priority};TRUE")
+        if(DEFINED "Kokkos_ENABLE_OPENMP")
+            set("SETTING_thread" "${priority};omp;ompt")
+            set("SETTING_openmp" "${priority};FALSE")
+        endif()
+        if(DEFINED "Kokkos_ENABLE_CUDA")
+            set("SETTING_cuda" "${priority};TRUE")
+        endif()
+        if(DEFINED "Kokkos_ENABLE_HIP")
+            set("SETTING_hip" "${priority};TRUE")
+        endif()
+    endif()
+    foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+        set("${prefix}_${setting}" "${SETTING_${setting}}" PARENT_SCOPE)
+    endforeach()
+endfunction()
 
 # Internal function listing all targets in a directory
 # https://stackoverflow.com/a/62311397/9986220
@@ -147,108 +184,220 @@ macro(_scorep_get_all_targets_recursive targets dir)
     list(APPEND ${targets} ${current_targets})
 endmacro()
 
-
-function(scorep_instrument)
-    cmake_parse_arguments(
-        ARG
-        "OVERRIDE;AUTO;OVERRIDE_VARIABLES"
-        ""
-        "LANGS;ARGUMENTS;DIRECTORIES;TARGETS"
-        ${ARGN}
-    )
-    if(NOT (DEFINED ScoreP_FOUND AND TARGET ScoreP::ScoreP))
-        message(FATAL_ERROR "Score-P: called 'scorep_instrument' before finding ScoreP")
-        return()
-    endif()
-    if(NOT (DEFINED ARG_DIRECTORIES OR DEFINED ARG_TARGETS))
-        set(ARG_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}")
-    endif()
-    foreach(directory ${ARG_DIRECTORIES})
-        _scorep_get_all_targets("${directory}" directoryTargets)
-        list(APPEND ARG_TARGETS ${directoryTargets})
-    endforeach()
-    list(REMOVE_DUPLICATES ARG_TARGETS)
-    get_target_property(scorep ScoreP::ScoreP IMPORTED_LOCATION)
-    foreach(target ${ARG_TARGETS})
-        if(NOT ARG_OVERRIDE_VARIABLES AND DEFINED "SCOREP_LANGUAGES_${target}")
-            set(languages "${SCOREP_LANGUAGES_${target}}")
+# Internal function used to determine wether the second argument value SUPERSEDES, is SUPERSEDED or is a CONFLICT.
+function(_scorep_compare_argument_values priority1 value1 variant1 priority2 value2 variant2 result)
+    if(priority2 STREQUAL "" OR priority2 GREATER priority1)
+        set("${result}" SUPERSEDED PARENT_SCOPE)
+    elseif(priority1 STREQUAL "" OR priority1 GREATER priority2)
+        set("${result}" SUPERSEDES PARENT_SCOPE)
+    else()
+        if(value2 STREQUAL "")
+            set("${result}" SUPERSEDED PARENT_SCOPE)
+        elseif(value1 STREQUAL "")
+            set("${result}" SUPERSEDES PARENT_SCOPE)
+        elseif(value1 STREQUAL value2)
+            if(variant2 STREQUAL "")
+                set("${result}" SUPERSEDED PARENT_SCOPE)
+            elseif(variant1 STREQUAL "")
+                set("${result}" SUPERSEDES PARENT_SCOPE)
+            elseif(variant1 STREQUAL variant2)
+                set("${result}" SUPERSEDED PARENT_SCOPE)
+            else()
+                set("${result}" CONFLICT PARENT_SCOPE)
+            endif()
         else()
-            set(languages ${ARG_LANGS})
+            set("${result}" CONFLICT PARENT_SCOPE)
         endif()
-        foreach(lang ${languages})
-            get_target_property(existingLauncher "${target}" ${lang}_COMPILER_LAUNCHER)
-            if (NOT (ARG_OVERRIDE OR existingLauncher STREQUAL "existingLauncher-NOTFOUND"))
-                message(
-                    FATAL_ERROR
-                    "Score-P: target ${target} has ${lang}_COMPILER_LAUNCHER already set to ${existingLauncher}"
-                    "Please check that the target in not already instrumented by something or unset the property."
-                )
-            endif()
-            get_target_property(existingLauncher "${target}" ${lang}_LINKER_LAUNCHER)
-            if (NOT (ARG_OVERRIDE OR existingLauncher STREQUAL "existingLauncher-NOTFOUND"))
-                message(
-                    FATAL_ERROR
-                    "Score-P: target ${target} has ${lang}_LINKER_LAUNCHER already set to ${existingLauncher}"
-                    "Please check that the target in not already instrumented by something or unset the property."
-                )
-            endif()
-            if(NOT ARG_OVERRIDE_VARIABLES AND DEFINED "SCOREP_${lang}_ARGUMENTS_${target}")
-                set(arguments "${SCOREP_${lang}_ARGUMENTS_${target}}")
-            else()
-                set(arguments ${ARG_ARGUMENTS})
-            endif()
-            if(ARG_AUTO)
-                scorep_infer_arguments("${target}" "${lang}" "${arguments}" targetLauncher)
-                list(PREPEND targetLauncher "${scorep}")
-            else()
-                set(targetLauncher "${scorep}" ${arguments})
-            endif()
-            set_target_properties("${target}" PROPERTIES ${lang}_COMPILER_LAUNCHER "${targetLauncher}")
-            set_target_properties("${target}" PROPERTIES ${lang}_LINKER_LAUNCHER "${targetLauncher}")
-        endforeach()
-    endforeach()
+    endif()
 endfunction()
 
-
-function(scorep_mark_instrumented)
-    cmake_parse_arguments(
-        ARG
-        "AUTO"
-        ""
-        "DIRECTORIES;TARGETS;LANGS;ARGUMENTS"
-        ${ARGN}
-    )
-    if(NOT (DEFINED ARG_DIRECTORIES OR DEFINED ARG_TARGETS))
-        set(ARG_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}")
-    endif()
-    foreach(directory ${ARG_DIRECTORIES})
-        _scorep_get_all_targets("${directory}" directoryTargets)
-        list(APPEND ARG_TARGETS ${directoryTargets})
+# Internal function which transforms Score-P arguments into setting variables with a prefix.
+function(_scorep_arguments2settings arguments priority prefix)
+    foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+        set("SETTING_${setting}" "")
     endforeach()
-    list(REMOVE_DUPLICATES ARG_TARGETS)
-
-    foreach(target ${ARG_TARGETS})
-        get_target_property(imported "${target}" IMPORTED)
-        get_target_property(aliased "${target}" ALIASED_TARGET)
-        if(imported)
-            message(WARNING "imported target ${target} can not be instrumented by Score-P")
-        elseif(aliased)
-            message(WARNING "alias target ${target} can not be instrumented by Score-P")
-        else()
-            foreach(lang ${ARG_LANGS})
-                if(ARG_AUTO)
-                    scorep_infer_arguments("${target}" "${lang}" "${ARG_ARGUMENTS}" arguments)
+    foreach(argument ${arguments})
+        set(handled FALSE)
+        foreach(enablearg ${_SCOREP_FLAG_SETTINGS})
+            if(argument MATCHES "^--${enablearg}((:|=)(.*))?$")
+                if(CMAKE_MATCH_COUNT EQUAL 0)
+                    set("SETTING_${enablearg}" "${priority};TRUE")
                 else()
-                    set(arguments "${ARG_ARGUMENTS}")
+                    set("SETTING_${enablearg}" "${priority};TRUE;${CMAKE_MATCH_2};${CMAKE_MATCH_3}")
                 endif()
-                set_target_properties("${target}" PROPERTIES SCOREP_${lang}_ARGUMENTS "${arguments}")
-            endforeach()
-            set_property(TARGET "${target}" APPEND PROPERTY SCOREP_LANGUAGES ${ARG_LANGS})
+            elseif(argument STREQUAL "--no${enablearg}")
+                set("SETTING_${enablearg}" "${priority};FALSE")
+            else()
+                continue()
+            endif()
+            set(handled TRUE)
+            break()
+        endforeach()
+        foreach(paradigmarg ${_SCOREP_CHOICE_SETTINGS})
+            if(argument MATCHES "^--${paradigmarg}=([^:]+)(:(.*))?$")
+                if(CMAKE_MATCH_COUNT EQUAL 1)
+                    set("SETTING_${paradigmarg}" "${priority};${CMAKE_MATCH_1}")
+                else()
+                    set("SETTING_${paradigmarg}" "${priority};${CMAKE_MATCH_1};${CMAKE_MATCH_3}")
+                endif()
+                set(handled TRUE)
+                break()
+            endif()
+        endforeach()
+        if(argument MATCHES "^--io=(.*)$")
+            string(REPLACE "," ";" value "${CMAKE_MATCH_1}")
+            set("SETTING_io" "${priority};${value}")
+            set(handled TRUE)
         endif()
+        if(NOT handled)
+            if(SETTING_other STREQUAL "")
+                set("SETTING_other" "${priority}")
+            endif()
+            list(APPEND SETTING_other "${argument}")
+        endif()
+    endforeach()
+    foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+        set("${prefix}_${setting}" "${SETTING_${setting}}" PARENT_SCOPE)
     endforeach()
 endfunction()
 
+# Internal function which merges the setting variables with prefix1 or prefix2 into setting variables with prefix.
+function(_scorep_merge_settings prefix1 prefix2 prefix)
+    foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+        set("SETTING_${setting}" "")
+    endforeach()
+    foreach(enablearg ${_SCOREP_FLAG_SETTINGS})
+        foreach(i 1 2)
+            set(priority${i} "")
+            set(value${i} "")
+            set(variant${i} "")
+            if(${prefix${i}}_${enablearg} MATCHES "^([0-9]+);([^;]+)(;[^;]*;(.*))?$")
+                set(priority${i} "${CMAKE_MATCH_1}")
+                if(CMAKE_MATCH_2)
+                    set(value${i} TRUE)
+                    if(CMAKE_MATCH_COUNT EQUAL 4)
+                        set(variant${i} "${CMAKE_MATCH_4}")
+                    endif()
+                else()
+                    set(value${i} FALSE)
+                endif()
+            endif()
+        endforeach()
+        if(priority1 STREQUAL "" AND priority2 STREQUAL "")
+            continue()
+        endif()
+        _scorep_compare_argument_values("${priority1}" "${value1}" "${variant1}" "${priority2}" "${value2}" "${variant2}" status)
+        if(status STREQUAL "SUPERSEDES")
+            set("SETTING_${enablearg}" "${${prefix2}_${enablearg}}")
+        elseif(status STREQUAL "SUPERSEDED")
+            set("SETTING_${enablearg}" "${${prefix1}_${enablearg}}")
+        else()
+            message(FATAL_ERROR "Score-P: failed to merge settings '${${prefix1}_${enablearg}}' and '${${prefix2}_${enablearg}}'")
+        endif()
+    endforeach()
+    foreach(paradigmarg ${_SCOREP_CHOICE_SETTINGS})
+        foreach(i 1 2)
+            set(priority${i} "")
+            set(value${i} "")
+            set(variant${i} "")
+            if(${prefix${i}}_${paradigmarg} MATCHES "^([0-9]+);([^;]*)(;(.*))?$")
+                set(priority${i} "${CMAKE_MATCH_1}")
+                set(value${i} "${CMAKE_MATCH_2}")
+                if(CMAKE_MATCH_COUNT EQUAL 4)
+                    set(variant${i} "${CMAKE_MATCH_4}")
+                endif()
+            endif()
+        endforeach()
+        if(priority1 STREQUAL "" AND priority2 STREQUAL "")
+            continue()
+        endif()
+        _scorep_compare_argument_values("${priority1}" "${value1}" "${variant1}" "${priority2}" "${value2}" "${variant2}" status)
+        if(status STREQUAL "SUPERSEDES")
+            set("SETTING_${paradigmarg}" "${${prefix2}_${paradigmarg}}")
+        elseif(status STREQUAL "SUPERSEDED")
+            set("SETTING_${paradigmarg}" "${${prefix1}_${paradigmarg}}")
+        else()
+            message(FATAL_ERROR "Score-P: failed to merge settings '${${prefix1}_${paradigmarg}}' and '${${prefix2}_${paradigmarg}}'")
+        endif()
+    endforeach()
+    foreach(unionarg ${_SCOREP_UNION_SETTINGS})
+        foreach(i 1 2)
+            set(priority${i} "")
+            set(values${i} "")
+            if(${prefix${i}}_${unionarg} MATCHES "^([0-9]+);(.*)$")
+                set(priority${i} "${CMAKE_MATCH_1}")
+                set(values${i} "${CMAKE_MATCH_2}")
+            endif()
+        endforeach()
+        if(priority1 STREQUAL "" AND priority2 STREQUAL "")
+            continue()
+        endif()
+        _scorep_compare_argument_values("${priority1}" "${values1}" "" "${priority2}" "${values2}" "" status)
+        if(status STREQUAL "SUPERSEDES")
+            set("SETTING_${unionarg}" "${${prefix2}_${unionarg}}")
+        elseif(status STREQUAL "SUPERSEDED")
+            set("SETTING_${unionarg}" "${${prefix1}_${unionarg}}")
+        else()
+            list(APPEND values1 ${values2})
+            set("SETTING_${unionarg}" "${priority1};${values1}")
+        endif()
+    endforeach()
+    foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+        set("${prefix}_${setting}" "${SETTING_${setting}}" PARENT_SCOPE)
+    endforeach()
+endfunction()
 
+# Internal function which transforms setting variables with a prefix into Score-P arguments.
+function(_scorep_settings2arguments prefix result)
+    set(arguments "")
+    foreach(enablearg ${_SCOREP_FLAG_SETTINGS})
+        if(${prefix}_${enablearg} MATCHES "^[0-9]+;([^;]+)(;([^;]*);(.*))?$")
+            if(CMAKE_MATCH_1)
+                if(CMAKE_MATCH_COUNT EQUAL 1)
+                    list(APPEND arguments "--${enablearg}")
+                else()
+                    list(APPEND arguments "--${enablearg}${CMAKE_MATCH_3}${CMAKE_MATCH_4}")
+                endif()
+            else()
+                list(APPEND arguments "--no${enablearg}")
+            endif()
+        endif()
+    endforeach()
+    foreach(paradigmarg ${_SCOREP_CHOICE_SETTINGS})
+        if(${prefix}_${paradigmarg} MATCHES "^[0-9]+;([^;]*)(;(.*))?$")
+            if(CMAKE_MATCH_COUNT EQUAL 1)
+                list(APPEND arguments "--${paradigmarg}=${CMAKE_MATCH_1}")
+            else()
+                list(APPEND arguments "--${paradigmarg}=${CMAKE_MATCH_1}:${CMAKE_MATCH_3}")
+            endif()
+        endif()
+    endforeach()
+    if(${prefix}_io MATCHES "^[0-9]+;(.*)$")
+        string(REPLACE ";" "," value "${CMAKE_MATCH_1}")
+        list(APPEND arguments "--io=${value}")
+    endif()
+    if(${prefix}_other MATCHES "^[0-9]+;(.*)$")
+        list(APPEND arguments ${CMAKE_MATCH_1})
+    endif()
+    set("${result}" "${arguments}" PARENT_SCOPE)
+endfunction()
+
+# Infers Score-P arguments for instrumenting a specific language of a target.
+function(scorep_infer_arguments target language arguments result)
+    _scorep_arguments2settings("${arguments}" 100 ARGUMENT)
+    _scorep_environment2settings("${language}" 1500 INFERRED)
+    _scorep_merge_settings(ARGUMENT INFERRED ARGUMENT)
+    _scorep_determine_link_closure("${target}" _scorep_all_visitor dependencies)
+    foreach(dependency ${dependencies})
+        _scorep_link_dependency2settings("${dependency}" "${language}" 1500 INFERRED)
+        _scorep_merge_settings(ARGUMENT INFERRED ARGUMENT)
+    endforeach()
+    _scorep_settings2arguments(ARGUMENT arguments)
+    set("${result}" "${arguments}" PARENT_SCOPE)
+endfunction()
+
+
+# Get components required to be present when finding Score-P based of the arguments and language of a target.
 function(scorep_arguments2components arguments lang result)
     set(components "")
     foreach(argument ${arguments})
@@ -291,6 +440,7 @@ function(scorep_arguments2components arguments lang result)
 endfunction()
 
 
+# Get components required to be present when finding Score-P based on current CMake variables.
 function(scorep_infer_components language result)
     set(detectedComponents "")
     if(language STREQUAL C)
@@ -313,11 +463,166 @@ function(scorep_infer_components language result)
 endfunction()
 
 
-function(scorep_required_components outVar)
+# Configures targets to be instrumented by Score-P.
+function(scorep_instrument)
+    cmake_parse_arguments(
+        ARG
+        "OVERRIDE;AUTO;OVERRIDE_VARIABLES"
+        ""
+        "LANGS;ARGUMENTS;DIRECTORIES;TARGETS"
+        ${ARGN}
+    )
+    if(NOT (DEFINED ScoreP_FOUND AND TARGET ScoreP::ScoreP))
+        message(FATAL_ERROR "Score-P: called 'scorep_instrument' before finding ScoreP")
+        return()
+    endif()
+    if(NOT (DEFINED ARG_DIRECTORIES OR DEFINED ARG_TARGETS))
+        set(ARG_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}")
+    endif()
+    foreach(directory ${ARG_DIRECTORIES})
+        _scorep_get_all_targets("${directory}" directoryTargets)
+        list(APPEND ARG_TARGETS ${directoryTargets})
+    endforeach()
+    list(REMOVE_DUPLICATES ARG_TARGETS)
+    get_target_property(scorep ScoreP::ScoreP IMPORTED_LOCATION)
+
+    if(ARG_AUTO)
+        _scorep_arguments2settings("${ARG_ARGUMENTS}" 100 ARGUMENT)
+    endif()
+
+    foreach(target ${ARG_TARGETS})
+        if(NOT ARG_OVERRIDE_VARIABLES AND DEFINED "SCOREP_LANGUAGES_${target}")
+            set(languages "${SCOREP_LANGUAGES_${target}}")
+        else()
+            set(languages ${ARG_LANGS})
+        endif()
+        if(ARG_AUTO)
+            _scorep_determine_link_closure("${target}" _scorep_all_visitor dependencies)
+        endif()
+        foreach(lang ${languages})
+            get_target_property(existingLauncher "${target}" ${lang}_COMPILER_LAUNCHER)
+            if (NOT (ARG_OVERRIDE OR existingLauncher STREQUAL "existingLauncher-NOTFOUND"))
+                message(
+                    FATAL_ERROR
+                    "Score-P: target ${target} has ${lang}_COMPILER_LAUNCHER already set to ${existingLauncher}"
+                    "Please check that the target in not already instrumented by something or unset the property."
+                )
+            endif()
+            get_target_property(existingLauncher "${target}" ${lang}_LINKER_LAUNCHER)
+            if (NOT (ARG_OVERRIDE OR existingLauncher STREQUAL "existingLauncher-NOTFOUND"))
+                message(
+                    FATAL_ERROR
+                    "Score-P: target ${target} has ${lang}_LINKER_LAUNCHER already set to ${existingLauncher}"
+                    "Please check that the target in not already instrumented by something or unset the property."
+                )
+            endif()
+            if(NOT ARG_OVERRIDE_VARIABLES AND DEFINED "SCOREP_${lang}_ARGUMENTS_${target}")
+                set(arguments "${SCOREP_${lang}_ARGUMENTS_${target}}")
+            else()
+                set(arguments ${ARG_ARGUMENTS})
+            endif()
+            if(ARG_AUTO)
+                _scorep_environment2settings("${lang}" 1500 INFERRED)
+                _scorep_merge_settings(ARGUMENT INFERRED TARGET_ARGUMENT)
+                foreach(dependency ${dependencies})
+                    _scorep_link_dependency2settings("${dependency}" "${lang}" 1500 INFERRED)
+                    _scorep_merge_settings(TARGET_ARGUMENT INFERRED TARGET_ARGUMENT)
+                endforeach()
+                _scorep_settings2arguments(TARGET_ARGUMENT targetLauncher)
+                list(PREPEND targetLauncher "${scorep}")
+            else()
+                set(targetLauncher "${scorep}" ${arguments})
+            endif()
+            set_target_properties("${target}" PROPERTIES ${lang}_COMPILER_LAUNCHER "${targetLauncher}")
+            set_target_properties("${target}" PROPERTIES ${lang}_LINKER_LAUNCHER "${targetLauncher}")
+        endforeach()
+    endforeach()
+endfunction()
+
+
+# Marks targets for the high-level interface.
+function(scorep_mark mode)
+    if(NOT (mode STREQUAL "HINT" OR mode STREQUAL "INSTRUMENT"))
+        message(FATAL_ERROR "Score-P: called 'scorep_mark' with invalid mode: '${mode}'")
+        return()
+    endif()
     cmake_parse_arguments(
         ARG
         "AUTO"
+        "PRIORITY"
+        "DIRECTORIES;TARGETS;LANGS;ARGUMENTS"
+        ${ARGN}
+    )
+    if(NOT (DEFINED ARG_DIRECTORIES OR DEFINED ARG_TARGETS))
+        set(ARG_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}")
+    endif()
+    foreach(directory ${ARG_DIRECTORIES})
+        _scorep_get_all_targets("${directory}" directoryTargets)
+        list(APPEND ARG_TARGETS ${directoryTargets})
+    endforeach()
+    list(REMOVE_DUPLICATES ARG_TARGETS)
+    if(NOT DEFINED ARG_PRIORITY)
+        set(ARG_PRIORITY 100)
+    elseif(ARG_PRIORITY STREQUAL "OPTIONAL")
+        set(ARG_PRIORITY 1000)
+    elseif(ARG_PRIORITY STREQUAL "DEFAULT")
+        set(ARG_PRIORITY 100)
+    elseif(ARG_PRIORITY STREQUAL "FORCE")
+        set(ARG_PRIORITY 0)
+    elseif(ARG_PRIORITY MATCHES "^[0-9]+$")
+    else()
+        message(FATAL_ERROR "Score-P: called 'scorep_mark' with invalid priority: '${ARG_PRIORITY}'")
+        return()
+    endif()
+    _scorep_arguments2settings("${ARG_ARGUMENTS}" "${ARG_PRIORITY}" ARGUMENT)
+
+    foreach(target ${ARG_TARGETS})
+        if(ARG_AUTO)
+            _scorep_determine_link_closure("${target}" _scorep_all_visitor dependencies)
+        endif()
+        foreach(lang ${ARG_LANGS})
+            if(ARG_AUTO)
+                _scorep_environment2settings("${lang}" 1500 INFERRED)
+                _scorep_merge_settings(ARGUMENT INFERRED TARGET_ARGUMENT)
+                foreach(dependency ${dependencies})
+                    _scorep_link_dependency2settings("${dependency}" "${lang}" 1500 INFERRED)
+                    _scorep_merge_settings(TARGET_ARGUMENT INFERRED TARGET_ARGUMENT)
+                endforeach()
+                set(prefix "TARGET_ARGUMENT")
+            else()
+                set(prefix "ARGUMENT")
+            endif()
+            foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+                if(NOT ${prefix}_${setting} STREQUAL "")
+                    set_target_properties(
+                        "${target}"
+                        PROPERTIES "SCOREP_${lang}_SETTING_${setting}"
+                        "${${prefix}_${setting}}"
+                    )
+                endif()
+            endforeach()
+        endforeach()
+        if(mode STREQUAL "INSTRUMENT")
+            get_target_property(imported "${target}" IMPORTED)
+            get_target_property(aliased "${target}" ALIASED_TARGET)
+            if(imported)
+                message(WARNING "Score-P: imported target '${target}' can not be instrumented")
+            elseif(aliased)
+                message(WARNING "Score-P: alias target '${target}' can not be instrumented")
+            else()
+                set_property(TARGET "${target}" APPEND PROPERTY SCOREP_LANGUAGES ${ARG_LANGS})
+            endif()
+        endif()
+    endforeach()
+endfunction()
+
+
+# Determines which and how targets marked by `scorep_mark` need to be instrumented.
+function(scorep_determine_instrumentations)
+    cmake_parse_arguments(
+        ARG
         ""
+        "COMPONENTS_VAR"
         "DIRECTORIES;TARGETS"
         ${ARGN}
     )
@@ -329,33 +634,85 @@ function(scorep_required_components outVar)
         list(APPEND ARG_TARGETS ${directoryTargets})
     endforeach()
     list(REMOVE_DUPLICATES ARG_TARGETS)
-
     set(components "")
-    set(languages "")
+    
     foreach(target ${ARG_TARGETS})
-        get_target_property(targetLanguages "${target}" SCOREP_LANGUAGES)
-        if(targetLanguages STREQUAL "targetLanguages-NOTFOUND")
-            continue()
+        get_target_property(type "${target}" TYPE)
+        if(type STREQUAL "EXECUTABLE" OR type STREQUAL "SHARED_LIBRARY" OR type STREQUAL "MODULE_LIBRARY")
+            _scorep_determine_link_closure("${target}" _scorep_not_standalone_visitor dependencies)
+            set(targets "")
+            foreach(dependency ${dependencies})
+                if(TARGET "${dependency}")
+                    list(APPEND targets "${dependency}")
+                endif()
+            endforeach()
+            set(dependencies "${targets}")
+
+            set(languages "")
+            foreach(dependency "${target}" ${dependencies})
+                get_target_property(targetLanguages "${dependency}" SCOREP_LANGUAGES)
+                if(NOT targetLanguages STREQUAL "targetLanguages-NOTFOUND")
+                    list(APPEND languages ${targetLanguages})
+                endif()
+            endforeach()
+            list(REMOVE_DUPLICATES languages)
+
+            foreach(language ${languages})
+                foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+                    set("LANGUAGE_${setting}" "")
+                endforeach()
+                foreach(dependency "${target}" ${dependencies})
+                    foreach(setting ${_SCOREP_FLAG_SETTINGS} ${_SCOREP_CHOICE_SETTINGS} ${_SCOREP_UNION_SETTINGS})
+                        get_target_property(value "${dependency}" "SCOREP_${language}_SETTING_${setting}")
+                        if(value STREQUAL "value-NOTFOUND")
+                            set("DEPENDENCY_${setting}" "")
+                        else()
+                            set("DEPENDENCY_${setting}" "${value}")
+                        endif()
+                    endforeach()
+                    _scorep_merge_settings(LANGUAGE DEPENDENCY LANGUAGE)
+                endforeach()
+
+                _scorep_settings2arguments(LANGUAGE "arguments_${language}")
+                if(ARG_COMPONENTS_VAR)
+                    scorep_arguments2components("${arguments_${language}}" "${language}" targetComponents)
+                    list(APPEND components ${targetComponents})
+                    list(REMOVE_DUPLICATES components)
+                endif()
+            endforeach()
+
+            foreach(dependency "${target}" ${dependencies})
+                if(dependency STREQUAL target)
+                    set(targetLanguages "${languages}")
+                else()
+                    get_target_property(targetLanguages "${dependency}" SCOREP_LANGUAGES)
+                    if(targetLanguages STREQUAL "targetLanguages-NOTFOUND")
+                        continue()
+                    endif()
+                endif()
+                foreach(language ${targetLanguages})
+                    get_target_property(targetArguments "${dependency}" "SCOREP_${language}_ARGUMENTS")
+                    if(targetArguments STREQUAL "targetArguments-NOTFOUND")
+                        set_target_properties(
+                            "${dependency}"
+                            PROPERTIES "SCOREP_${language}_ARGUMENTS"
+                            "${arguments_${language}}"
+                        )
+                    elseif(NOT targetArguments STREQUAL "${arguments_${language}}")
+                        message(FATAL_ERROR "Score-P: target ${dependency} has SCOREP_${language}_ARGUMENTS already set to '${targetArguments}'")
+                    endif()
+                endforeach()
+            endforeach()
         endif()
-        list(APPEND languages ${targetLanguages})
-        foreach(lang ${targetLanguages})
-            get_target_property(arguments "${target}" SCOREP_${lang}_ARGUMENTS)
-            scorep_arguments2components("${arguments}" "${lang}" languageComponents)
-            list(APPEND components ${languageComponents})
-        endforeach()
     endforeach()
-    if(ARG_AUTO)
-        foreach(lang ${languages})
-            # call out of the target loop to avoid generating the same components over and over
-            scorep_infer_components("${lang}" detectedComponents)
-            list(APPEND components ${detectedComponents})
-        endforeach()
+
+    if(ARG_COMPONENTS_VAR)
+        set("${ARG_COMPONENTS_VAR}" "${components}" PARENT_SCOPE)
     endif()
-    list(REMOVE_DUPLICATES components)
-    set("${outVar}" "${components}" PARENT_SCOPE)
 endfunction()
 
 
+# Instruments targets marked by `scorep_mark` using `scorep_instrument` based on the `SCOREP_<LANG>_ARGUMENTS` target property.
 function(scorep_enable)
     cmake_parse_arguments(
         ARG

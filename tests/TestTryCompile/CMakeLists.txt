@@ -6,7 +6,8 @@ project(
 )
 
 include(ScorePUtilities)
-scorep_mark_instrumented()
+scorep_mark(INSTRUMENT)
+scorep_determine_instrumentations()
 find_package(ScoreP REQUIRED)
 scorep_enable()
 

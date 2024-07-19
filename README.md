@@ -7,14 +7,14 @@ CMake integration for [Score-P](https://score-p.org).
 1. Place the files `FindScoreP.cmake` and `ScorePUtilities.cmake` somewhere in your
 [`CMAKE_MODULE_PATH`](https://cmake.org/cmake/help/latest/variable/CMAKE_MODULE_PATH.html) and include `ScorePUtilities` in your CMake configuration.
 
-2. Call `scorep_mark_instrumented` on targets which should be instrumented by Score-P.
+2. Call `scorep_mark` on targets which should be instrumented by Score-P.
 
-3. After all targets have been defined call `scorep_required_components` and use its output
+3. After all targets have been defined call `scorep_determine_instrumentations` and use its output
    to call [`find_package(ScoreP ...)`](https://cmake.org/cmake/help/latest/command/find_package.html).
 
 4. Call `scorep_enable` to enable Score-P instrumentation.
 
-  - it is advised to call `find_package(ScoreP)` and `scorep_enable` based on an option for a flexible build configuration
+  - it is advised to call everything after step 2 based on an option for a flexible build configuration
 
   - if you don't want to vendor the `ScorePUtilities` module it should only be included
     when the option is enabled and its used functions replaced with dummies otherwise

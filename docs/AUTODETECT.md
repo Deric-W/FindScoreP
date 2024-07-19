@@ -3,20 +3,20 @@
 The [`ScorepUtilities`](UTILITIES.md) module allows to automatically detect arguments and components required for Score-P instrumentation.
 
 Since [generator expressions](https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html) are only evaluated during
-build system generation the autodetection only considers one target at a time without its dependencies.
+build system generation the autodetection ignores dependencies containing them.
 
 ## Arguments
 
 The following paragraphs list all automatically detected arguments and the conditions which trigger them.
 
-Autodetection for each argument is disabled when a conflicting argument is already present.
+**Since generator expressions can not be evaluated dependencies specified by them are ignored!**
 
-### --thread=omp and --openmp
+### --thread=omp
 
  - linking against [`OpenMP::OpenMP_<lang>`](https://cmake.org/cmake/help/latest/module/FindOpenMP.html#result-variables) with
    [`OpenMP_<lang>_FOUND`](https://cmake.org/cmake/help/latest/module/FindOpenMP.html#result-variables) defined
 
-### --thread=omp:ompt
+### --thread=omp:ompt and --noopenmp
 
  - linking against [`Kokkos::kokkos`](https://kokkos.org/kokkos-core-wiki/building.html#kokkos-philosophy) with
    [`Kokkos_ENABLE_OPENMP`](https://kokkos.org/kokkos-core-wiki/keywords.html#backend-selection) defined

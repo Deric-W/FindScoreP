@@ -28,8 +28,8 @@ if(ENABLE_SCOREP)
     if(CMAKE_CXX_COMPILER)
         list(APPEND expectedComponents "COMPILER_CXX11_${CMAKE_CXX_COMPILER}")
     endif()
-    _check_lists_equal("${compilerLauncherArgs}" "--io=posix;--compiler;--thread=omp;--openmp")
-    _check_lists_equal("${linkerLauncherArgs}" "--io=posix;--compiler;--thread=omp;--openmp")
+    _check_lists_equal("${compilerLauncherArgs}" "--io=posix;--compiler;--thread=omp")
+    _check_lists_equal("${linkerLauncherArgs}" "--io=posix;--compiler;--thread=omp")
     _check_lists_equal("${scorepComponents}" "${expectedComponents}")
 
     add_test(

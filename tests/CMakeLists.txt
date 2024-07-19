@@ -110,6 +110,27 @@ add_test(
 set_property(TEST "Test ScorePUtilities detecting all targets" PROPERTY FIXTURES_REQUIRED tmpdir)
 set_property(TEST "Test ScorePUtilities detecting all targets" PROPERTY LABELS cmake)
 
+add_test(
+    NAME "Test dependency detection"
+    COMMAND "${CMAKE_COMMAND}"
+    ${TEST_ARGUMENTS}
+    --fresh
+    "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+    -S "${CMAKE_CURRENT_LIST_DIR}/TestDependencies"
+    -B "${temporaryDir}/TestDependencies"
+)
+set_property(TEST "Test dependency detection" PROPERTY FIXTURES_REQUIRED tmpdir)
+set_property(TEST "Test dependency detection" PROPERTY LABELS c)
+
+add_test(
+    NAME "Test argument merging"
+    COMMAND "${CMAKE_COMMAND}"
+    ${TEST_ARGUMENTS}
+    "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+    -P "${CMAKE_CURRENT_LIST_DIR}/merge_arguments.cmake"
+)
+set_property(TEST "Test argument merging" PROPERTY LABELS cmake)
+
 function(_add_example_tests example labels)
     add_test(
         NAME "Test ${example} example without Score-P"
