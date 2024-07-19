@@ -463,34 +463,59 @@ function(scorep_infer_components language result)
 endfunction()
 
 
+# Discovers targets in directories and stores them as a list in a variable.
+function(scorep_discover_targets result)
+    set(targets "")
+    if("${ARGN}" STREQUAL "")
+        set(directories "${CMAKE_CURRENT_SOURCE_DIR}")
+    else()
+        set(directories "${ARGN}")
+    endif()
+    foreach(directory ${directories})
+        _scorep_get_all_targets("${directory}" directoryTargets)
+        set(validTargets "")
+        foreach(directoryTarget ${directoryTargets})
+            get_target_property(type "${directoryTarget}" TYPE)
+            if(type STREQUAL "INTERFACE_LIBRARY")
+                continue()
+            endif()
+            get_target_property(imported "${directoryTarget}" IMPORTED)
+            if((NOT imported STREQUAL "imported-NOTFOUND") AND imported)
+                continue()
+            endif()
+            get_target_property(aliased "${directoryTarget}" ALIASED_TARGET)
+            if((NOT aliased STREQUAL "aliased-NOTFOUND") AND aliased)
+                continue()
+            endif()
+            list(APPEND validTargets "${directoryTarget}")
+        endforeach()
+        list(APPEND targets ${validTargets})
+    endforeach()
+    list(REMOVE_DUPLICATES targets)
+    set("${result}" "${targets}" PARENT_SCOPE)
+endfunction()
+
+
 # Configures targets to be instrumented by Score-P.
-function(scorep_instrument)
+function(scorep_instrument targets)
     cmake_parse_arguments(
         ARG
         "OVERRIDE;AUTO;OVERRIDE_VARIABLES"
         ""
-        "LANGS;ARGUMENTS;DIRECTORIES;TARGETS"
+        "LANGS;ARGUMENTS"
         ${ARGN}
     )
     if(NOT (DEFINED ScoreP_FOUND AND TARGET ScoreP::ScoreP))
         message(FATAL_ERROR "Score-P: called 'scorep_instrument' before finding ScoreP")
         return()
     endif()
-    if(NOT (DEFINED ARG_DIRECTORIES OR DEFINED ARG_TARGETS))
-        set(ARG_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}")
-    endif()
-    foreach(directory ${ARG_DIRECTORIES})
-        _scorep_get_all_targets("${directory}" directoryTargets)
-        list(APPEND ARG_TARGETS ${directoryTargets})
-    endforeach()
-    list(REMOVE_DUPLICATES ARG_TARGETS)
     get_target_property(scorep ScoreP::ScoreP IMPORTED_LOCATION)
 
     if(ARG_AUTO)
         _scorep_arguments2settings("${ARG_ARGUMENTS}" 100 ARGUMENT)
     endif()
 
-    foreach(target ${ARG_TARGETS})
+    foreach(target ${targets})
         if(NOT ARG_OVERRIDE_VARIABLES AND DEFINED "SCOREP_LANGUAGES_${target}")
             set(languages "${SCOREP_LANGUAGES_${target}}")
         else()
@@ -541,7 +566,7 @@ endfunction()
 
 
 # Marks targets for the high-level interface.
-function(scorep_mark mode)
+function(scorep_mark mode targets)
     if(NOT (mode STREQUAL "HINT" OR mode STREQUAL "INSTRUMENT"))
         message(FATAL_ERROR "Score-P: called 'scorep_mark' with invalid mode: '${mode}'")
         return()
@@ -550,17 +575,9 @@ function(scorep_mark mode)
         ARG
         "AUTO"
         "PRIORITY"
-        "DIRECTORIES;TARGETS;LANGS;ARGUMENTS"
+        "LANGS;ARGUMENTS"
         ${ARGN}
     )
-    if(NOT (DEFINED ARG_DIRECTORIES OR DEFINED ARG_TARGETS))
-        set(ARG_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}")
-    endif()
-    foreach(directory ${ARG_DIRECTORIES})
-        _scorep_get_all_targets("${directory}" directoryTargets)
-        list(APPEND ARG_TARGETS ${directoryTargets})
-    endforeach()
-    list(REMOVE_DUPLICATES ARG_TARGETS)
     if(NOT DEFINED ARG_PRIORITY)
         set(ARG_PRIORITY 100)
     elseif(ARG_PRIORITY STREQUAL "OPTIONAL")
@@ -576,7 +593,7 @@ function(scorep_mark mode)
     endif()
     _scorep_arguments2settings("${ARG_ARGUMENTS}" "${ARG_PRIORITY}" ARGUMENT)
 
-    foreach(target ${ARG_TARGETS})
+    foreach(target ${targets})
         if(ARG_AUTO)
             _scorep_determine_link_closure("${target}" _scorep_all_visitor dependencies)
         endif()
@@ -618,25 +635,17 @@ endfunction()
 
 
 # Determines which and how targets marked by `scorep_mark` need to be instrumented.
-function(scorep_determine_instrumentations)
+function(scorep_determine_instrumentations targets)
     cmake_parse_arguments(
         ARG
         ""
         "COMPONENTS_VAR"
-        "DIRECTORIES;TARGETS"
+        ""
         ${ARGN}
     )
-    if(NOT (DEFINED ARG_DIRECTORIES OR DEFINED ARG_TARGETS))
-        set(ARG_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}")
-    endif()
-    foreach(directory ${ARG_DIRECTORIES})
-        _scorep_get_all_targets("${directory}" directoryTargets)
-        list(APPEND ARG_TARGETS ${directoryTargets})
-    endforeach()
-    list(REMOVE_DUPLICATES ARG_TARGETS)
     set(components "")
     
-    foreach(target ${ARG_TARGETS})
+    foreach(target ${targets})
         get_target_property(type "${target}" TYPE)
         if(type STREQUAL "EXECUTABLE" OR type STREQUAL "SHARED_LIBRARY" OR type STREQUAL "MODULE_LIBRARY")
             _scorep_determine_link_closure("${target}" _scorep_not_standalone_visitor dependencies)
@@ -713,24 +722,16 @@ endfunction()
 
 
 # Instruments targets marked by `scorep_mark` using `scorep_instrument` based on the `SCOREP_<LANG>_ARGUMENTS` target property.
-function(scorep_enable)
+function(scorep_enable targets)
     cmake_parse_arguments(
         ARG
         "OVERRIDE;OVERRIDE_VARIABLES"
         ""
-        "DIRECTORIES;TARGETS"
+        ""
         ${ARGN}
     )
-    if(NOT (DEFINED ARG_DIRECTORIES OR DEFINED ARG_TARGETS))
-        set(ARG_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}")
-    endif()
-    foreach(directory ${ARG_DIRECTORIES})
-        _scorep_get_all_targets("${directory}" directoryTargets)
-        list(APPEND ARG_TARGETS ${directoryTargets})
-    endforeach()
-    list(REMOVE_DUPLICATES ARG_TARGETS)
 
-    foreach(target ${ARG_TARGETS})
+    foreach(target ${targets})
         if(NOT ARG_OVERRIDE_VARIABLES AND DEFINED "SCOREP_LANGUAGES_${target}")
             set(languages "${SCOREP_LANGUAGES_${target}}")
         else()
@@ -749,9 +750,9 @@ function(scorep_enable)
                 endif()
             endif()
             if(ARG_OVERRIDE)
-                scorep_instrument(TARGETS "${target}" LANGS ${lang} ARGUMENTS ${arguments} OVERRIDE_VARIABLES OVERRIDE)
+                scorep_instrument("${target}" LANGS ${lang} ARGUMENTS ${arguments} OVERRIDE_VARIABLES OVERRIDE)
             else()
-                scorep_instrument(TARGETS "${target}" LANGS ${lang} ARGUMENTS ${arguments} OVERRIDE_VARIABLES)
+                scorep_instrument("${target}" LANGS ${lang} ARGUMENTS ${arguments} OVERRIDE_VARIABLES)
             endif()
         endforeach()
     endforeach()

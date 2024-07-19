@@ -6,10 +6,11 @@ project(
 )
 
 include(ScorePUtilities)
-scorep_mark(INSTRUMENT)
-scorep_determine_instrumentations()
+scorep_discover_targets(allTargets)
+scorep_mark(INSTRUMENT "${allTargets}")
+scorep_determine_instrumentations("${allTargets}")
 find_package(ScoreP REQUIRED)
-scorep_enable()
+scorep_enable("${allTargets}")
 
 try_run(
     exitCode

@@ -12,13 +12,9 @@ at the cost of sometimes needing a little help.
 
 ### Functions
 
-#### scorep_instrument()
+#### scorep_instrument(targets)
 
 Configures targets to be instrumented by Score-P and supports the following keywords:
-
- - `DIRECTORIES`, a multi-value keyword which lists directories in which all targets should be instrumented
-
- - `TARGETS`, a multi-value keyword which lists targets which should be instrumented
 
  - `OVERRIDE`, an option that when enabled allows overwriting existing `<LANG>_COMPILER_LAUNCHER` and `<LANG>_LINKER_LAUNCHER` properties
 
@@ -29,8 +25,6 @@ Configures targets to be instrumented by Score-P and supports the following keyw
  - `AUTO`, an option which enables automatic detection of Score-P arguments using `scorep_infer_arguments`
 
  - `OVERRIDE_VARIABLES`, an option which disables processing of `SCOREP_LANGUAGES_<TARGET>` and `SCOREP_<LANG>_ARGUMENTS_<TARGET>`
-
-The function defaults to the current directory if no directories or targets are passed.
 
 **`find_package(ScoreP ...)` has to be executed successfully before this function can be used!**
 
@@ -47,7 +41,7 @@ The cache variables are intended to be set by users who wish to override which a
 
 ### Functions
 
-#### scorep_mark(mode)
+#### scorep_mark(mode targets)
 
 Marks targets for the high-level interface:
 
@@ -57,10 +51,6 @@ Marks targets for the high-level interface:
 
 The function supports the following keywords:
 
- - `DIRECTORIES`, a multi-value keyword which lists directories in which all targets should be marked
-
- - `TARGETS`, a multi-value keyword which lists targets which should be marked
-
  - `LANGS`, a multi-value keyword which lists the names of the languages to mark
 
  - `ARGUMENTS`, a multi-value keyword which lists the commandline arguments to Score-P
@@ -69,8 +59,7 @@ The function supports the following keywords:
 
  - `AUTO`, an option which enables automatic detection of Score-P arguments using `scorep_infer_arguments` with priority 1500
 
-The function defaults to the current directory if no directories or targets are passed
-and does by itself nothing besides setting the `SCOREP_LANGUAGES` and `SCOREP_<LANG>_SETTING_<SETTING>` properties.
+The function does nothing by itself besides setting the `SCOREP_LANGUAGES` and `SCOREP_<LANG>_SETTING_<SETTING>` properties.
 
 The priority passed to `PRIORITY` supports in addition to numerical values:
 
@@ -80,19 +69,13 @@ The priority passed to `PRIORITY` supports in addition to numerical values:
 
  - `FORCE`, alias for 0
 
-#### scorep_determine_instrumentations()
+#### scorep_determine_instrumentations(targets)
 
 Determines which and how targets marked by `scorep_mark` need to be instrumented.
 
 The functions supports the following keywords:
 
- - `DIRECTORIES`, a multi-value keyword which lists directories in which all targets should be checked
-
- - `TARGETS`, a multi-value keyword which lists targets which should be checked
-
  - `COMPONENTS_VAR`, a single-value keyword which takes the variable in which the required components for the find module are stored.
-
-The function defaults to the current directory if no directories or targets are passed.
 
 The passed targets are filtered so that only targets which can be instrumented individually
 by Score-P (shared and module libraries and executables) remain.
@@ -109,21 +92,15 @@ The Score-P arguments determined for each Score-P enabled target are stored in t
 
 **Since generator expressions can not be evaluated dependencies specified by them are ignored!**
 
-#### scorep_enable()
+#### scorep_enable(targets)
 
 Instruments targets marked by `scorep_mark` using `scorep_instrument` based on the `SCOREP_<LANG>_ARGUMENTS` target property.
 
 The function supports the following keywords:
 
- - `DIRECTORIES`, a multi-value keyword which lists directories in which all targets should be checked
-
- - `TARGETS`, a multi-value keyword which lists targets which should be checked
-
  - `OVERRIDE`, an option that when enabled allows overwriting existing `<LANG>_COMPILER_LAUNCHER` and `<LANG>_LINKER_LAUNCHER` properties
 
  - `OVERRIDE_VARIABLES`, an option which disables processing of `SCOREP_LANGUAGES_<TARGET>` and `SCOREP_<LANG>_ARGUMENTS_<TARGET>`
-
-The function defaults to the current directory if no directories or targets are passed.
 
 **`find_package(ScoreP ...)` has to be executed successfully before this function can be used!**
 
@@ -225,3 +202,11 @@ Get components required to be present when finding Score-P based on current CMak
 The result will be stored in the variable name contained in `outVar` as a list of components.
 
 For more information on component autodetection see [AUTODETECT.md](AUTODETECT.md#Components).
+
+#### scorep_discover_targets(outVar [directory ...])
+
+Discovers targets in directories and stores them as a list in a variable named by `outVar`.
+
+Targets which can not be instrumented by Score-P are automatically skipped.
+
+The function defaults to the current directory if no directories or targets are passed.
