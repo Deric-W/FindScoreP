@@ -124,6 +124,13 @@ the highest priority (smallest number) are selected.
 If there are still multiple values remaining they are attempted to be merged,
 which causes a CMake error if not possible.
 
+As an implementation detail, settings with a value of `CONFLICT;<PRIORITY>;<MESSAGE>` are converted
+into CMake errors when not overridden before being converted into arguments or target properties.
+
+This means that when merging the settings of multiple dependencies conflict errors are delayed
+until argument or property generation in hope of another setting with a higher priority
+overriding the conflict.
+
 ##### Choice settings
 
 For the settings `thread`, `mpp` and `mutex` the value of the property `SCOREP_<LANG>_SETTING_<SETTING>`

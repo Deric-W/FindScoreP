@@ -131,6 +131,26 @@ add_test(
 )
 set_property(TEST "Test argument merging" PROPERTY LABELS cmake)
 
+add_test(
+    NAME "Test argument merging conflict"
+    COMMAND "${CMAKE_COMMAND}"
+    ${TEST_ARGUMENTS}
+    "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+    -P "${CMAKE_CURRENT_LIST_DIR}/merge_arguments_conflict.cmake"
+)
+set_property(TEST "Test argument merging conflict" PROPERTY LABELS cmake)
+set_property(TEST "Test argument merging conflict" PROPERTY WILL_FAIL true)
+
+add_test(
+    NAME "Test argument merging propagated conflict"
+    COMMAND "${CMAKE_COMMAND}"
+    ${TEST_ARGUMENTS}
+    "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+    -P "${CMAKE_CURRENT_LIST_DIR}/merge_arguments_propagated_conflict.cmake"
+)
+set_property(TEST "Test argument merging propagated conflict" PROPERTY LABELS cmake)
+set_property(TEST "Test argument merging propagated conflict" PROPERTY WILL_FAIL true)
+
 function(_add_example_tests example labels)
     add_test(
         NAME "Test ${example} example without Score-P"

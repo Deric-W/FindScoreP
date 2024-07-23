@@ -1,11 +1,5 @@
 include(ScorePUtilities)
 
-function(_assert_equal a b)
-    if(NOT a STREQUAL b)
-        message(FATAL_ERROR "values ${a} and ${b} are not equal")
-    endif()
-endfunction()
-
 function(_check_lists_equal actual expected)
     list(LENGTH actual actualLength)
     list(LENGTH expected expectedLength)
@@ -50,3 +44,11 @@ _scorep_arguments2settings("--opencl" 10 TEST2)
 _scorep_merge_settings(TEST1 TEST2 MERGED)
 _scorep_settings2arguments(MERGED merged)
 _check_lists_equal("${merged}" "--opencl:a")
+
+_scorep_arguments2settings("--thread=pthread" 10 TEST1)
+_scorep_arguments2settings("--thread=omp" 10 TEST2)
+_scorep_arguments2settings("--thread=omp" 1 TEST3)
+_scorep_merge_settings(TEST1 TEST2 MERGED)
+_scorep_merge_settings(TEST3 MERGED MERGED)
+_scorep_settings2arguments(MERGED merged)
+_check_lists_equal("${merged}" "--thread=omp")
