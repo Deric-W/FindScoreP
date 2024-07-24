@@ -46,11 +46,11 @@ _check_lists_equal("${dependencies}" "A;B;E")
 _scorep_determine_link_dependencies(B _scorep_all_visitor dependencies)
 _check_lists_equal("${dependencies}" "D")
 
-_scorep_determine_link_closure(main _scorep_all_visitor closure)
+_scorep_determine_link_closure(main _scorep_all_visitor _scorep_all_visitor closure)
 _check_lists_equal("${closure}" "A;B;D;E")
 
-_scorep_determine_link_closure(main _test_visitor closure)
+_scorep_determine_link_closure(main _test_visitor _test_visitor closure)
 _check_lists_equal("${closure}" "A")
 
-_scorep_determine_link_closure(main _scorep_not_standalone_visitor closure)
-_check_lists_equal("${closure}" "A")
+_scorep_determine_link_closure(main _scorep_not_standalone_visitor _scorep_all_visitor closure)
+_check_lists_equal("${closure}" "A;E")
