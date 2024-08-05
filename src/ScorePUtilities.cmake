@@ -366,8 +366,8 @@ function(scorep_determine_instrumentations targets)
                             PROPERTIES "SCOREP_${language}_ARGUMENTS"
                             "${arguments_${language}}"
                         )
-                    elseif(NOT targetArguments STREQUAL "arguments_${language}")
-                        message(FATAL_ERROR "Score-P: target ${dependency} has SCOREP_${language}_ARGUMENTS already set to '${targetArguments}'")
+                    elseif(NOT targetArguments STREQUAL "${arguments_${language}}")
+                        message(FATAL_ERROR "Score-P: target ${target} has SCOREP_${language}_ARGUMENTS already set to '${targetArguments}' instead of '${arguments_${language}}'")
                     endif()
                 endforeach()
             endif()
