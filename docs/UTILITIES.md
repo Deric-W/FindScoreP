@@ -80,13 +80,24 @@ The functions supports the following keywords:
 The passed targets are filtered so that only targets which can be instrumented individually
 by Score-P (shared and module libraries and executables) remain.
 
-For each of these targets the set of transitive link dependencies is calculated while excluding
-dependencies which are linked to through targets which can be instrumented individually by Score-P.
+For each of these targets two sets of dependencies are calculated.
 
-Since the top level and all Score-P enabled targets of a set have to use the same Score-P settings
-they are merged for each set.
+The first (local) set of a target includes all transitive link dependencies excluding dependencies
+which are linked to through targets which can be instrumented individually by Score-P.
 
-If a Score-P enabled target is contained in different sets having different Score-P settings a CMake error is generated.
+Since the top level and all Score-P enabled targets of the local set have to use the same Score-P settings
+they are merged for each set and the top level target instrumented when any dependency is instrumented by Score-P.
+
+Since some settings like `thread`, `mpp` and `io` have to be the same across all dependencies of a target they
+are merged in another set containing them called the global set.
+
+Since a target which should be instrumented by Score-P can only be instrumented
+with one value for each setting they can only be in one local and global set.
+
+In the case a instrumented target is contained in multiple local or global sets they are
+merged to prevent multiple settings from being choosen.
+
+When merging of some settings fails a CMake error is generated when calculating Score-P arguments.
 
 The Score-P arguments determined for each Score-P enabled target are stored in the `SCOREP_<LANG>_ARGUMENTS` target property.
 

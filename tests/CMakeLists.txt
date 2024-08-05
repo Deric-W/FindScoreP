@@ -151,6 +151,27 @@ add_test(
 set_property(TEST "Test argument merging propagated conflict" PROPERTY LABELS cmake)
 set_property(TEST "Test argument merging propagated conflict" PROPERTY WILL_FAIL true)
 
+add_test(
+    NAME "Test union-find datastructure"
+    COMMAND "${CMAKE_COMMAND}"
+    ${TEST_ARGUMENTS}
+    "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+    -P "${CMAKE_CURRENT_LIST_DIR}/unionfind.cmake"
+)
+set_property(TEST "Test union-find datastructure" PROPERTY LABELS cmake)
+
+add_test(
+    NAME "Test determined instrumentations"
+    COMMAND "${CMAKE_COMMAND}"
+    ${TEST_ARGUMENTS}
+    --fresh
+    "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+    -S "${CMAKE_CURRENT_LIST_DIR}/TestDeterminedInstrumentations"
+    -B "${temporaryDir}/TestDeterminedInstrumentations"
+)
+set_property(TEST "Test determined instrumentations" PROPERTY FIXTURES_REQUIRED tmpdir)
+set_property(TEST "Test determined instrumentations" PROPERTY LABELS c)
+
 function(_add_example_tests example labels)
     add_test(
         NAME "Test ${example} example without Score-P"
