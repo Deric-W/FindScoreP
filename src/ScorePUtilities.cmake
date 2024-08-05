@@ -330,7 +330,7 @@ function(_scorep_merge_settings prefix1 prefix2 prefix)
         else()
             set(
                 "SETTING_${enablearg}"
-                "CONFLICT;${priority1};Score-P: failed to merge settings '${${prefix1}_${enablearg}}' and '${${prefix2}_${enablearg}}'"
+                "CONFLICT;${priority1};Score-P: failed to merge settings '${${prefix1}_${enablearg}}' and '${${prefix2}_${enablearg}}' for setting '${enablearg}'"
             )
         endif()
     endforeach()
@@ -365,7 +365,7 @@ function(_scorep_merge_settings prefix1 prefix2 prefix)
         else()
             set(
                 "SETTING_${paradigmarg}"
-                "CONFLICT;${priority1};Score-P: failed to merge settings '${${prefix1}_${paradigmarg}}' and '${${prefix2}_${paradigmarg}}'"
+                "CONFLICT;${priority1};Score-P: failed to merge settings '${${prefix1}_${paradigmarg}}' and '${${prefix2}_${paradigmarg}}' for setting '${paradigmarg}'"
             )
         endif()
     endforeach()
