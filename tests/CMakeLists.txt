@@ -172,6 +172,15 @@ add_test(
 set_property(TEST "Test determined instrumentations" PROPERTY FIXTURES_REQUIRED tmpdir)
 set_property(TEST "Test determined instrumentations" PROPERTY LABELS c)
 
+add_test(
+    NAME "Test including the module in script mode"
+    COMMAND "${CMAKE_COMMAND}"
+    ${TEST_ARGUMENTS}
+    "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+    -P "${CMAKE_CURRENT_LIST_DIR}/include_script.cmake"
+)
+set_property(TEST "Test including the module in script mode" PROPERTY LABELS cmake)
+
 function(_add_example_tests example labels)
     add_test(
         NAME "Test ${example} example without Score-P"

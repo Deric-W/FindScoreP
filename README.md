@@ -4,7 +4,7 @@ CMake integration for [Score-P](https://score-p.org).
 
 ## Usage
 
-1. Place the files `FindScoreP.cmake` and `ScorePUtilities.cmake` somewhere in your
+1. Place the contents of the `src` directory somewhere in your
 [`CMAKE_MODULE_PATH`](https://cmake.org/cmake/help/latest/variable/CMAKE_MODULE_PATH.html) and include `ScorePUtilities` in your CMake configuration.
 
 2. Call `scorep_mark` on targets which should be instrumented by Score-P.
