@@ -14,3 +14,4 @@ paper/*
 !paper/*.cls
 !paper/*.bib
 !paper/*.bst
+!paper/graphics/
