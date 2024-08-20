@@ -236,8 +236,127 @@
 
     \newpage
     \section{Betrachtung CMake}
-    \correctme{TODO}
+    Bei CMake handelt es sich um ein Werkzeug zum Bauen von Softwareprojekten, welches aus in einer
+    plattformunabhängigen Sprache definierten Projektbeschreibung die dafür nötigen Schritte
+    ermittelt~\longcite{CMake-Documentation}{User Interaction Guide}.
 
+    Die Verwendung von CMake besteht zuerst auf einer Konfigurationsphase in welcher Informationen
+    über das aktuelle System gesammelt und die Projektbeschreibung evaluiert wird.
+
+    Anschlie{\ss}end wird mit den gesammelten Daten eine Konfiguration für ein plattformspezifisches Werkzeug
+    (wie u.a. Unix Makefiles oder Visual Studio~\longcite{CMake-Documentation}{cmake-generators(7)})
+    generiert welches das eigentliche Bauen des Projektes
+    übernimmt~\longcite{CMake-Documentation}{User Interaction Guide}.
+
+    \subsection{Projektbeschreibung}
+    Die Projektbeschreibung ist in einer CMake spezifischen Sprache verfasst welche die Zeichenkette
+    als einzigen Datentyp besitzt, wobei Zeichenketten als Werte anderer Datentypen interpretiert
+    werden können~\longcite{CMake-Documentation}{cmake-language(7)}.
+
+    Sie besteht aus mehreren `Targets' welche Befehle zum Erreichen eines bestimmten Zustandes wie
+    z.B. das Bauen eines ausführbaren Programms repräsentieren~\longcite{CMake-Documentation}{cmake-buildsystem(7)}.
+
+    Ein Target kann von den Ergebnissen anderer Targets abhängen, was dafür sorgt dass vor der
+    Ausführung der Befehle des Targets die Befehle von diesen Targets ausgeführt werden.
+
+    \subsubsection{Targettypen}
+    Neben benutzerdefinierten Targets besitzt CMake bereits vordefinierte Targets zum repräsentieren
+    von häufigen Aktionen beim Bauen von Programmen, welche nachfolgend erläutert
+    werden~\longcite{CMake-Documentation}{cmake-buildsystem(7)}.
+
+    \paragraph{`EXECUTABLE'} Targets repräsentieren ausführbaren Programme.
+
+    \paragraph{`STATIC\_LIBRARY'} Targets repräsentieren statische Programmbibliotheken welche
+    beim Linken anderer Programmteile verwendet werden können.
+
+    \paragraph{`SHARED\_LIBRARY'} Targets repräsentieren dynamische Programmbibliotheken welche
+    neben dem Linken anderer Programmteile auch zur Laufzeit geladen werde kann.
+
+    \paragraph{`MODULE\_LIBRARY'} Targets repräsentieren dynamische Programmkomponenten welche
+    im Gegensatz zu Bibliotheken nur zur Laufzeit geladen werden.
+
+    \paragraph{`OBJECT\_LIBRARY'} Targets repräsentieren Mengen von bereits zu Objektcode
+    compilierten Quelltexten.
+
+    \paragraph{`INTERFACE\_LIBRARY'} Targets repräsentieren Ausführungskonfigurationen welche andere
+    Targets durch linken übernehmen können.
+
+    \paragraph{`ALIAS'} Targets repräsentieren andere Targets und können im Gegensatz zu vielen
+    anderen Targets nicht verändert werden.
+
+    \paragraph{`IMPORTED'} Targets repräsentieren bereits existierende Objekte welche z.B. durch
+    installierte Programme zur Verfügung gestellt werden und können deswegen nicht bearbeitet
+    oder erneut gebaut werden.
+
+    \subsubsection{Targeteigenschaften}
+    CMake definiert bestimmte Targeteigenschaften welche die Ausführung eines Target beeinflussen,
+    wobei eine Auswahl nachfolgend erläutert wird~\longcite{CMake-Documentation}{cmake-properties(7)}.
+
+    An vielen Stellen erlaubt CMake die Verwendung sogenannter `generator expressions', was spezielle
+    Ausdrücke sind welche nach der Evaluation der Projektbeschreibung beim Generieren der Werkzeugkonfiguration
+    ausgewertet werden~\longcite{CMake-Documentation}{cmake-generator-expressions(7)}.
+
+    Sie erlauben bei Werkzeugen welche mehrere Konfigurationsprofile besitzen ein Anpassen von
+    Eigenschaftswerten an das benutzte Profil, was bei der Evaluation der Projektbeschreibung
+    noch unbekannt ist und erst im Rahmen der Konfigurationsgenerierung ermittelt werden kann.
+
+    \paragraph{`<LANG>\_COMPILER\_LAUNCHER'} enthält ein Programm welches verwendet werden soll um
+    Aufrufe des Compiler einer bestimmten Sprache durchzuführen.
+
+    \paragraph{`<LANG>\_LINKER\_LAUNCHER'} verhält sich wie `<LANG>\_COMPILER\_LAUNCHER' für Aufrufe des Linkers.
+
+    \paragraph{`LINK\_LIBRARIES'} enthält Bibliotheken oder Targets gegen welche das Target gelinkt
+    werden soll wobei die Verwendung von `generator expressions' erlaubt ist.
+
+    \paragraph{`INTERFACE\_LINK\_LIBRARIES'} enthält Bibliotheken oder Targets gegen welche beim Linken
+    gegen das aktuelle Target zusätzlich gelinkt werden soll wobei die Verwendung von
+    `generator expressions' erlaubt ist.
+
+    Dabei ist es unerheblich ob das Linken im Rahmen von `LINK\_LIBRARIES' oder durch Verweise
+    in `INTERFACE\_LINK\_LIBRARIES' anderer gelinkter Targets stattfindet.
+
+    \subsection{Module}
+    CMake erlaubt es Benutzern Programme welche in der CMake Sprache geschrieben sind wiederzuverwenden
+    indem deren Quellcode innerhalb des aktuellen Namensraumes für Variablen durch die `include'
+    Funktion evaluiert wird~\longcite{CMake-Documentation}{include}.
+
+    Dabei kann eine bestimmte Datei oder nur der Name des zu ladenen Moduls angegeben werden,
+    in welchem Falle die den Quellcode des Moduls enthaltene Datei in Verzeichnissen welche in
+    der Variable `CMAKE\_MODULE\_PATH' gespeichert sind gesucht wird.
+
+    Dem gegenüber steht der Begriff des `Package', welcher externe Software welche durch den
+    Benutzer beim Bauen des Projektes angefordert werden kann
+    beschreibt~\longcite{CMake-Documentation}{cmake-packages(7)}.
+
+    Diese Software wird au{\ss}erhalb von CMake durch den Benutzer installiert und besteht aus
+    Sicht von CMake aus importierten Targets oder Variablen mit weiteren Informationen, wobei
+    zwei Arten von Packages mit unterschiedlichen Lokalisierungsmechanismen existieren.
+
+    Die erste Art nutzt Module welche den Namen der zu lokalisierenden Software mit einem `Find'
+    Präfix tragen und beim Aufruf die zur Lokalisierung der Software notwendigen Schritte
+    durchführen~\longcite{CMake-Documentation}{cmake-developer(7)}.
+
+    Dabei müssen diese Module nicht von der zu lokalisierenden Software bereitgestellt werden sondern
+    können auch durch den Benutzer in von CMake durchsuchten Verzeichnissen abgelegt werden.
+
+    Die zweite Art nutzt eine Reihe von CMake Dateien mit dem Namen der Software und den Postfix `Config'
+    und `Version' welche im Gegensatz zu Find-Modulen zu einer bestimmten Installation der Software
+    gehören und von der zu lokalisierenden Software bereitgestellt
+    werden~\longcite{CMake-Documentation}{cmake-packages(7)}.
+
+    Dadurch kann ein möglicherweise aufwendiges Untersuchen der Installation auf bestimmte Merkmale
+    vermieden werden, jedoch setzt dies vorraus dass die zu lokalisierende Software mit CMake
+    gebaut wurde oder diese Dateien manuell generiert werden.
+
+    Unabhängig von der Art des Package kann bei dessen Suche eine Versionsnummer
+    (im Format Major.Minor.Patch.Tweak) und eine Liste von Komponenten übergeben
+    werden~\longcite{CMake-Documentation}{find\_package}.
+
+    Da es sich wie bei allen Variablen in CMake bei ihnen um Zeichenketten handelt ist die Verarbeitung
+    der Versionsnummer und Definition der Komponenten abhängig von der Implementierung des Package,
+    jedoch ist vorgesehen dass die Version der lokalisierten Software kompatibel zu der übergebenen
+    Versionsnummer ist und die lokalisierte Installation die als benötigt deklarierte Komponenten
+    besitzt~\longcite{CMake-Documentation}{find\_package}.
 
     \newpage
     \section{Implementierung}
