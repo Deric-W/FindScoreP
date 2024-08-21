@@ -15,3 +15,5 @@ paper/*
 !paper/*.bib
 !paper/*.bst
 !paper/graphics/
+!paper/patches/
+!paper/BenchmarkProject/

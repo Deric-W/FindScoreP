@@ -1,5 +1,7 @@
 \documentclass[german,proseminar,hyperref,utf8]{zihpub}
 \usepackage{copyrightbox}
+\usepackage{listings}
+\usepackage{pgfplots}
 
 \graphicspath{{graphics/}}
 
@@ -631,10 +633,177 @@
     aller Einstellungswerte verzögert wird um das Überschreiben des Konfliktes zu ermöglichen falls
     andere Werte mit einer höheren Priorität existieren.
 
+
+    \newpage
     \section{Leistungsanalyse}
-    \correctme{TODO}
+    Zur Beurteilung der Nützlichkeit der entwickelten CMake Module wird nachfolgend deren Anwendung
+    am Beispiel der GROMACS~\cite{gromacs} Anwendung gezeigt und mit Alternativen verglichen.
+
+    \subsection{bisherige Umsetzung}
+    Die bisherige Umsetzung bestand aus der Verwendung der Score-P Wrapper~\longcite{Score-P-Documentation}
+    {Score-P Compiler Wrapper Usage}, welche wie bei der Betrachtung von Score-P bereits erwähnt das
+    Setzen bestimmten Umgebungsvariablen vor dem Konfigurieren des CMake Projekts vorraussetzt.
+
+    \begin{lstlisting}[language=bash, caption=Anwendung eines Score-P Wrapper bei GROMACS, gobble=8, showstringspaces=false, basicstyle=\small]
+        export SCOREP_WRAPPER_INSTRUMENTER_FLAGS= \
+        "--thread=omp:ompt --io=posix --compiler"
+        SCOREP_WRAPPER=off cmake -S . -B build -DGMX_BUILD_OWN_FFTW=ON \
+        -DCMAKE_CXX_COMPILER=scorep-clang++
+    \end{lstlisting}
+
+    Neben einer Konfiguration des Projektes außerhalb der von CMake dafür vorgesehen Mechanismen
+    wie zum Beispiel der CMake Sprache erlaubt es diese Umsetzung aufgrund der Verwendung globaler
+    Umgebungsvariablen nicht die Instrumentisierung einzelner Targets zu steuern.
+
+    Dies sorgt in diesem Beispiel dafür dass ein in Score-P existierender Fehler welcher durch das
+    fehlerhafte Linken von statischen Bibliotheken ein Bauen der Anwendung unmöglich macht
+    nur unter hohen Aufwand umgangen werden könnte.
+
+    Zusätzlich wird der Konfigurationsprozess des Projektes komplizierter weil neben dem Setzen der
+    benötigten Umgebungsvariablen die von CMake Parametern abhängige Auswahl der Score-P Einstellungen
+    außerhalb von CMake (zum Beispiel durch ein externes Script oder den Entwickler) erfolgen muss.
+
+    \subsection{Umsetzung durch Module}
+    Bei der Verwendung der entwickelten CMake Module kann hingegen auf eine Konfiguration außerhalb
+    von CMake verzichtet und damit die Komplexität des Konfigurationsprozesses begrenzt werden.
+
+    \begin{lstlisting}[caption=Anwendung der entwickelten Module bei GROMACS, gobble=8, showstringspaces=false, basicstyle=\small]
+        option(ENABLE_SCOREP "Enable Score-P instrumentation" OFF)
+        if(ENABLE_SCOREP)
+            include(ScorePUtilities)
+        
+            scorep_discover_targets(allTargets)
+            scorep_discover_targets(targets src api)
+            set(targetsToInstrument "")
+            foreach(target ${targets})
+                if(NOT target MATCHES "test")
+                    list(APPEND targetsToInstrument "${target}")
+                endif()
+            endforeach()
+            
+            if(GMX_OPENMP)
+                # prevent Opari2 instrumentation
+                scorep_mark(
+                    INSTRUMENT "${targetsToInstrument}"
+                    LANGS CXX
+                    ARGUMENTS "--compiler" "--thread=omp:ompt"
+                    AUTO
+                )
+            else()
+                scorep_mark(
+                    INSTRUMENT "${targetsToInstrument}"
+                    LANGS CXX
+                    ARGUMENTS "--compiler"
+                    AUTO
+                )
+            endif()
+            scorep_determine_instrumentations(
+                "${allTargets}"
+                COMPONENTS_VAR scorepComponents
+            )
+            scorep_infer_components(CXX inferredComponents)
+            list(APPEND scorepComponents ${inferredComponents})
+            list(REMOVE_DUPLICATES scorepComponents)
+            find_package(ScoreP REQUIRED COMPONENTS ${scorepComponents})
+            scorep_enable("${allTargets}")
+        endif()
+    \end{lstlisting}
+
+    Durch die Verwendung einer Option namens `ENABLE\_SCOREP' kann die Entscheidung ob Score-P verwendet
+    werden soll im Rahmen von CMake und damit auch interaktiv durch darauf aufbauende Werkzeuge erfolgen.
+
+    \begin{lstlisting}[caption=Aktivieren von Score-P bei GROMACS, gobble=8, showstringspaces=false, basicstyle=\small, language=bash]
+        cmake -S . -B build -DGMX_BUILD_OWN_FFTW=ON -DENABLE_SCOREP=ON
+    \end{lstlisting}
+
+    Zusätzlich kann auf die CMake Projektbeschreibung zugegriffen und damit die benötigten Score-P Argumente
+    ermittelt werden, was in diesem Fall ein automatisches Anpassen der Score-P Argumente an die
+    durch den Benutzer gewählten Projekteinstellungen ermöglicht.
+
+    Die einzige dafür notwendige Veränderung war die Verwendung des `MPI::MPI\_CXX' Targets welches
+    als moderne Schnittstelle zu der von CMake lokalisierten MPI Installation von den entwickelten
+    Modulen verwendet wird um die Verwendung von MPI zu erkennen.
+
+    Da GROMACS aktuell noch ältere Schnittstellen nutzt müsste die Verwendung von MPI alternativ
+    manuell basierend auf den von GROMACS bereitgestellten Optionen erkannt werden, wobei es bereits
+    Bemühungen gibt auf die moderne Schnittstelle zu wechseln~\longcite{gromacs-git}{Issues/\#3672}.
+
+    Neben dem automatisches Anpassen der Score-P Argumente erlaubt der Zugriff auf die CMake
+    Projektbeschreibung auch ein Umgehen des in Score-P existierenden Fehlers welcher bei der
+    Verwendung eines Score-P Wrappers ein Bauen unmöglich gemacht hatte.
+
+    Da dieser beim Linken des `libgromacs' Targets die Reihenfolge der zu linkenden Bibliotheken
+    verändert kann durch eine manuelle Verwendung von `scorep-config' und anschließendem Anpassen
+    der Targeteigenschaften die Anwendung erfolgreich gebaut werden.
+
+    \begin{lstlisting}[caption=Workaround für Score-P Bug, gobble=8, showstringspaces=false, basicstyle=\small]
+        get_target_property(scorepArguments libgromacs SCOREP_CXX_ARGUMENTS)
+        set_property(TARGET libgromacs PROPERTY CXX_LINKER_LAUNCHER)
+        execute_process(
+            COMMAND "${SCOREP_CONFIG_EXECUTABLE}"
+            ${scorepArguments} --ldflags
+            OUTPUT_VARIABLE ldflags
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+        execute_process(
+            COMMAND "${SCOREP_CONFIG_EXECUTABLE}"
+            ${scorepArguments} --event-libs
+            OUTPUT_VARIABLE eventLibs
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+        execute_process(
+            COMMAND "${SCOREP_CONFIG_EXECUTABLE}"
+            ${scorepArguments} --mgmt-libs
+            OUTPUT_VARIABLE mgmtLibs
+            COMMAND_ERROR_IS_FATAL ANY
+        )
+        string(REGEX REPLACE "[     ]+" ";" ldflags "${ldflags}")
+        string(REGEX REPLACE "[     ]+" ";" eventLibs "${eventLibs}")
+        string(REGEX REPLACE "[     ]+" ";" mgmtLibs "${mgmtLibs}")
+        target_link_options(libgromacs BEFORE PRIVATE ${ldflags})
+        target_link_libraries(libgromacs PRIVATE ${eventLibs})
+        target_link_libraries(libgromacs PRIVATE ${mgmtLibs})
+    \end{lstlisting}
+
+    \subsection{Laufzeit}
+    Die Kosten der automatischen Anpassung der Score-P Argumente und der dafür nötigen Targetanalyse
+    ist eine spürbare Verzögerung beim Konfigurieren von GROMACS.
+
+    Um dies genauer zu untersuchen wurde ein Beispielprojekt generiert welches eine gewünschte
+    Anzahl an standalone Targets besitzt welche jeweils gegen vier statischen Bibliotheken linken
+    um ein großes Projekt zu simulieren.
+
+    Zusätzlich linkt jedes standalone Target gegen zwei zufällige Targets um die Laufzeit der
+    Vereinigung von Abhängigkeitsmengen zu messen.
+
+    Dabei exisitieren zwei Varianten des Beispielprojekts, welche sich durch die Verwendung der
+    `AUTO' der Funktion `scorep\_mark' voneinander unterscheiden.
+
+    Diese Option aktiviert dass automatische Erkennen der Score-P Argumente beim Markieren der Targets
+    und analysiert dafür alle Abhängigkeiten des zu markierenden Targets.
+
+    \begin{center}
+        \begin{tikzpicture}
+            \begin{axis}[
+                title=Zeit zum Konfigurieren des Beispielprojekts,
+                xlabel=Anzahl der standalone Targets,
+                ylabel=Zeit in Mikrosekunden,
+                width=0.75\textwidth,
+                legend pos=north west
+            ]
+                \addplot table [x=targets, y=runtime, col sep=comma] {BenchmarkProject/runtime_auto.csv};
+                \addlegendentry{mit AUTO}
+                \addplot table [x=targets, y=runtime, col sep=comma] {BenchmarkProject/runtime_noauto.csv};
+                \addlegendentry{ohne AUTO}
+            \end{axis}
+        \end{tikzpicture}
+    \end{center}
+
+    Es ist ersichtlich dass die Laufzeit schneller als linear wächst während gleichzeitig das Verzichten
+    auf die `AUTO' Option nur eine geringe Geschwindigkeitsverbesserung ergibt.
 
 
+    \newpage
     \section{Fazit}
     \correctme{TODO}
 
