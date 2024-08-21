@@ -16,10 +16,10 @@
     \section{Einleitung}
     \subsection{Ziel und Motivation der Arbeit}
     Profiling und die damit verbundenen Analysewerkzeuge sind essenziell für die Erkennung von
-    Optimierungspotenzial und das Messen der Effektivität der Umsetzung.
+    Optimierungspotenzial und das Messen der Effektivität der umgesetzten Optimierung.
 
     Da im HPC Umfeld Ausführungsgeschwindigkeit und Effizienz besonders hohe Prioritäten haben existieren
-    mehrere~\longcite{Score-P-Paper}{79} Werkzeuge welche auf die dort verwendeten Technologien
+    mehrere~\longcite{Score-P-Paper}{79} Werkzeuge welche an die dort verwendeten Technologien
     und Pradigmen angepasst sind.
 
     Jedoch fokussieren sich die meisten Tools auf bestimmte Anwendungsfälle und Technologien,
@@ -29,7 +29,7 @@
     analysiert werden muss wenn diese inkompatibel zueinander sind, was wiederum Redundanz
     und Mehraufwand bedeutet.
 
-    Um dies zu vermeiden stellt Score-P~\cite{Score-P-Paper} ein Framework dar welches erlaubt
+    Um dies zu vermeiden existiert mit Score-P~\cite{Score-P-Paper} ein Framework welches erlaubt
     eine Anwendung  einmalig zu instrumentisieren und die gewonnenen Daten mit mehreren
     unterschiedlichen Werzeugen zu analysieren.
 
@@ -78,7 +78,7 @@
 
     \subsubsection{Profilingschnittstellen}
     Neben manueller Instrumentisierung durch den Benutzer~\longcite{Score-P-Documentation}{Application Instrumentation}
-    besitzt Score-P Integrationen mit folgenden Technologien.
+    besitzt Score-P Integrationen mit folgenden Technologien:
 
     \paragraph{Compilerinstrumentisierung}
     Um Aufrufe von Funktionen aufzuzeichnen kann Score-P den verwendeten Compiler
@@ -136,7 +136,7 @@
     GCC, einer weit verbreiteten Compilersammlung, unterstützt~\cite{gomp}. 
 
     \paragraph{Pthread Bibliotheksaufrufe}
-    Pthread, auch bekannt als POSIX Threads, ist die standardisierte Threadingbibliothek auf POSIX
+    Pthread, auch bekannt als POSIX Threads, ist die standardisierte Threadingbibliothek auf POSIX-
     kompatiblen Betriebssystemen, welche von Score-P durch das Wrappen von Bibliothekssymbolen
     beim Linken der zu instrumentisieren Anwendung mit von Score-P bereitgestellten
     Implementierungen Instrumentisiert wird~\longcite{Score-P-Documentation}{Application Instrumentation}.
@@ -215,7 +215,7 @@
     {Score-P Tools}.
 
     Die zu nutzenden Profilingschnittstellen werden über Befehlsargumente ausgewählt oder durch
-    Analyse des übergebenen Befehls erkannt, wobei dies nicht immer funktioniert~\longcite{Score-P-Documentation}
+    Analyse des übergebenen Befehls erkannt, wobei letzteres nicht immer funktioniert~\longcite{Score-P-Documentation}
     {Application Instrumentation}.
 
     Dabei ist zu beachten dass für jede Instrumentisierte Anwendung nur ein Threadingparadigma
@@ -247,6 +247,9 @@
     Die Verwendung von CMake besteht zuerst auf einer Konfigurationsphase in welcher Informationen
     über das aktuelle System gesammelt und die Projektbeschreibung evaluiert wird.
 
+    Zusätzlich können Optionen deklariert werden welche es ermöglichen Einfluss auf den
+    Konfigurationsprozess zu nehmen.
+
     Anschlie{\ss}end wird mit den gesammelten Daten eine Konfiguration für ein plattformspezifisches Werkzeug
     (wie u.a. Unix Makefiles oder Visual Studio~\longcite{CMake-Documentation}{cmake-generators(7)})
     generiert welches das eigentliche Bauen des Projektes
@@ -261,7 +264,7 @@
     z.B. das Bauen eines ausführbaren Programms repräsentieren~\longcite{CMake-Documentation}{cmake-buildsystem(7)}.
 
     Ein Target kann von den Ergebnissen anderer Targets abhängen, was dafür sorgt dass vor der
-    Ausführung der Befehle des Targets die Befehle von diesen Targets ausgeführt werden.
+    Ausführung der Befehle eines abhängigen Targets die Befehle der referenzierten Targets ausgeführt werden.
 
     \subsubsection{Targettypen}
     Neben benutzerdefinierten Targets besitzt CMake bereits vordefinierte Targets zum repräsentieren
@@ -518,6 +521,10 @@
     werden weil eine Analyse des Targets durch die Möglichkeit der Verwendung von Generatorausdrücken 
     beim Konfigurieren des CMake Projekts nicht vollständig möglich ist.
 
+    Wenn jedoch der Benutzer die Unvollständigkeit der Analyse für unproblematisch befindet
+    kann diese optional verwendet werden um aus den Abhängigkeiten eines Targets seine Score-P
+    Einstellungen abzuleiten.
+
     Au{\ss}erdem muss eine mit den gewählten Befehlen kompatible Score-P Installation vor der Verwendung
     der Schnittstelle durch das Lokalisierungsmodul lokalisiert werden um den Speicherort des
     Score-P Befehls zu ermitteln.
@@ -559,12 +566,12 @@
     \begin{figure}[ht]
         \begin{center}
             \includegraphics[width=0.75\textwidth]{analysis_before.drawio.png}
-            \caption{Beispiel einer Targetkonfiguration}
+            \caption{Beispiel einer Projektkonfiguration}
             \label{fig:analysis_example}
         \end{center}
     \end{figure}
 
-    In dem Beispiel existieren eine Reihen von Targets mit durch gestrichelte Linien dargestellten
+    In dem Beispiel existieren eine Reihe von Targets mit durch gestrichelte Linien dargestellten
     Abhängigkeiten beim Linken, welche neben statischen Bibliotheken sogennante `standalone Targets'
     beinhalten.
 
@@ -572,6 +579,10 @@
     Konstruktor besitzen und damit im Rahmen der meisten Score-P Einstellungen nicht an die
     zu instrumentisierende Anwendung gebunden sind, wozu neben `EXECUTABLE' und `SHARED\_LIBRARY'
     auch Targets des Typs `MODULE\_LIBRARY' zählen.
+
+    Zusätzlich handelt es sich bei den analysierten Abhängigkeiten nur um solche welche keine
+    Generatorausdrücke verwenden weil diese sonst nicht während des Konfigurierens des CMake
+    Projekts evaluiert werden könnten.
 
     Zu diesen Einstellungen zählen wie bereits erwähnt nicht das verwendete Threading und
     Kommunikationsparadigma, welche innerhalb einer Anwendung eindeutig sein müssen.
@@ -611,11 +622,11 @@
     
     Im Beispiel würde dies bedeuten dass folgende Mengen existieren:
 
-    \begin{align}
+    \begin{align*}
         \text{lokale Abhängigkeiten} &= \{ \{ B, D, F, G, C \}, \{ A, D \}, \{ E, H \} \} \\
         \text{globale Abhängigkeiten} &= \{ \{ A, B, C, D, E, F, G, H \} \} \\
         \text{zu instrumentisierende Targets} &= \{ B, C, G \}
-    \end{align}
+    \end{align*}
 
     Da einige Mengen keine zu instrumentisierenden Targets enthalten können diese ignoriert werden.
 
@@ -799,14 +810,14 @@
         \end{tikzpicture}
     \end{center}
 
-    Es ist ersichtlich dass die Laufzeit schneller als linear wächst während gleichzeitig das Verzichten
-    auf die `AUTO' Option nur eine geringe Geschwindigkeitsverbesserung ergibt.
+    Es ist ersichtlich dass die Laufzeit schneller als linear wächst während das Verzichten auf
+    die `AUTO' Option nur eine geringe Geschwindigkeitsverbesserung ergibt.
 
 
     \newpage
     \section{Fazit}
     \correctme{TODO}
-
+    
 
     \section{Ausblick}
     \correctme{TODO}
