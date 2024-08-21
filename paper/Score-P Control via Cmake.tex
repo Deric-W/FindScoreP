@@ -30,10 +30,10 @@
     und Mehraufwand bedeutet.
 
     Um dies zu vermeiden existiert mit Score-P~\cite{Score-P-Paper} ein Framework welches erlaubt
-    eine Anwendung  einmalig zu instrumentisieren und die gewonnenen Daten mit mehreren
-    unterschiedlichen Werzeugen zu analysieren.
+    eine Anwendung  einmalig zu instrumentieren und die gewonnenen Daten mit mehreren
+    unterschiedlichen Werkzeugen zu analysieren.
 
-    Gleichzeitig nutzen viele Projekte Werzeuge welche das Bauen und Verwalten einen Projektes
+    Gleichzeitig nutzen viele Projekte Werkzeuge welche das Bauen und Verwalten einen Projektes
     vereinfachen.
 
     Ein populäres Werkzeug ist CMake~\cite{CMake-Documentation}, für welches jedoch die Nutzung
@@ -77,10 +77,10 @@
     dadurch von mehreren Werkzeugen verwendet werden.
 
     \subsubsection{Profilingschnittstellen}
-    Neben manueller Instrumentisierung durch den Benutzer~\longcite{Score-P-Documentation}{Application Instrumentation}
+    Neben manueller Instrumentierung durch den Benutzer~\longcite{Score-P-Documentation}{Application Instrumentation}
     besitzt Score-P Integrationen mit folgenden Technologien:
 
-    \paragraph{Compilerinstrumentisierung}
+    \paragraph{Compilerinstrumentierung}
     Um Aufrufe von Funktionen aufzuzeichnen kann Score-P den verwendeten Compiler
     anweisen das Betreten und Verlassen dieser durch Aufrufe spezieller Funktionen
     zu markieren~\longcite{Score-P-Documentation}{Application Instrumentation}.
@@ -88,9 +88,9 @@
     Dabei ist zu beachten das die Namen der entstehenden Regionen und Art wie diese generiert
     werden von dem verwendeten Compiler abhängig ist.
 
-    Dies ist besonders wichtig wenn die zu instrumentisierende Anwendung in C++ geschrieben ist,
-    weil einige Compiler kein Filtern der zu instrumentisierenden Funktionen erlauben und C++
-    Anwendungen häufig viele kleine Funktionen besitzen wessen Instrumentisierung einen signifikanten
+    Dies ist besonders wichtig wenn die zu instrumentierende Anwendung in C++ geschrieben ist,
+    weil einige Compiler kein Filtern der zu instrumentierenden Funktionen erlauben und C++
+    Anwendungen häufig viele kleine Funktionen besitzen wessen Instrumentierung einen signifikanten
     Overhead erzeugen kann~\longcite{Score-P-Documentation}{Application Instrumentation}.
 
     \paragraph{MPI Bibliotheksaufrufe}
@@ -100,7 +100,7 @@
     Um Aufrufe von MPI Funktionen zu Erkennen und zu Messen wird dafür das im MPI Standard
     spezifizierte `Profiling Interface'~\shortcite{mpi}{717} verwendet.
 
-    Bei der Instrumentisierung einer Anwendung wird dafür neben der MPI Implementierung zusätzlich
+    Bei der Instrumentierung einer Anwendung wird dafür neben der MPI Implementierung zusätzlich
     gegen eine von Score-P bereitgestellte Bibliothek gelinkt~\longcite{Score-P-Documentation}{Application Instrumentation}.
 
     \paragraph{SHMEM Bibliotheksaufrufe}
@@ -121,11 +121,11 @@
     innerhalb eines gemeinsamen Adressbereichs~\longcite{openmp}{23} markieren und die Umsetzung 
     dem verwendeten Compiler überlassen.
 
-    Die Verwendung von Compilerdirektiven stellt jedoch auch eine Hürde bei der Instrumentisierung dar
+    Die Verwendung von Compilerdirektiven stellt jedoch auch eine Hürde bei der Instrumentierung dar
     weil das Erkennen und Messen von Funktionsaufrufen nicht ausreicht um die komplette API abzudecken.
 
     Eine der von Score-P verwendeten Lösungen stellt die Opari2 Komponente dar, welche den Quellcode der
-    zu instrumentisierenden Anwendung analysiert und Aufrufe von Messfunktionen an bestimmten Stellen
+    zu instrumentierenden Anwendung analysiert und Aufrufe von Messfunktionen an bestimmten Stellen
     einfügt~\longcite{Score-P-Documentation}{Introduction}.
 
     Eine Alternative ist die Verwendung des `OMPT Interface'~\shortcite{openmp}{419}, welches eine
@@ -138,8 +138,8 @@
     \paragraph{Pthread Bibliotheksaufrufe}
     Pthread, auch bekannt als POSIX Threads, ist die standardisierte Threadingbibliothek auf POSIX-
     kompatiblen Betriebssystemen, welche von Score-P durch das Wrappen von Bibliothekssymbolen
-    beim Linken der zu instrumentisieren Anwendung mit von Score-P bereitgestellten
-    Implementierungen Instrumentisiert wird~\longcite{Score-P-Documentation}{Application Instrumentation}.
+    beim Linken der zu instrumentieren Anwendung mit von Score-P bereitgestellten
+    Implementierungen Instrumentiert wird~\longcite{Score-P-Documentation}{Application Instrumentation}.
 
     \paragraph{OpenCL Bibliotheksaufrufe}
     Bei OpenCL handelt es sich wie bei MPI und SCHMEM um eine standardisierte Bibliotheksschnittstelle,
@@ -159,13 +159,13 @@
     dementsprechend meistens keinen gemeinsamen Adressbereich, da die ausgeführten Programmteile
     möglicherweise auf anderen Geräten laufen~\longcite{openacc}{11}.
 
-    Beim Instrumentisieren von Anwendungen welche OpenACC unterstützen verwendet Score-P das
+    Beim Instrumentieren von Anwendungen welche OpenACC unterstützen verwendet Score-P das
     `Profiling and Error Callback Interface'~\shortcite{openacc}{123}, wofür wiederum gegen eine
     von Score-P bereitgestellte Bibliothek gelinkt~\longcite{Score-P-Documentation}{Introduction}
     werden muss.
 
     \paragraph{CUDA}
-    CUDA ist eine vom Hersteller NVIDIA entwickelte Werzeugsammlung welche es erlaubt GPU-basierte
+    CUDA ist eine vom Hersteller NVIDIA entwickelte Werkzeugsammlung welche es erlaubt GPU-basierte
     Anwendungen zu entwickeln und auszuführen~\longcite{nvidia-docs}{CUDA}.
 
     Score-P erlaubt das Aufzeichnen von Funktionsaufrufen der CUDA API und GPU Aktivitäten mit Hilfe des
@@ -183,7 +183,7 @@
     Funktionsaufrufe von Funktionen bekannter I/O Schnittstellen können durch Score-P aufgezeichnet werden.
 
     Dabei werden neben den bekannten POSIX Funktionen auch Funktionen der asynchronen POSIX Schnittstelle,
-    ISO C und MPI untersützt~\longcite{Score-P-Documentation}{Introduction}.
+    ISO C und MPI unterstützt~\longcite{Score-P-Documentation}{Introduction}.
 
     \subsubsection{Datenformate}
     Nach dem Instrumentieren einer Anwendung ermöglicht Score-P zwei Arten der Datenerfassung,
@@ -206,10 +206,10 @@
     werden~\longcite{Score-P-Documentation}{Application Measurement}.
 
     \subsection{Anwendung}
-    Um eine Anwendung mit Score-P zu instrumentisieren wird ein Befehl namens `scorep' zur Verfügung
+    Um eine Anwendung mit Score-P zu instrumentieren wird ein Befehl namens `scorep' zur Verfügung
     gestellt welcher vor die Befehle zum Compilieren und Linken der Anwendung gestellt wird.
 
-    Das damit assoziierte Programm analysiert den übergebenen Befehl und führt die zur Instrumentisierung
+    Das damit assoziierte Programm analysiert den übergebenen Befehl und führt die zur Instrumentierung
     notwendigen Aktionen aus, wobei die Berechnung von benötigten Linkerargumenten und zu linkenden
     Bibliotheken von einem weiteren Werkzeug namens `scorep-config' durchgeführt wird~\longcite{Score-P-Documentation}
     {Score-P Tools}.
@@ -218,7 +218,7 @@
     Analyse des übergebenen Befehls erkannt, wobei letzteres nicht immer funktioniert~\longcite{Score-P-Documentation}
     {Application Instrumentation}.
 
-    Dabei ist zu beachten dass für jede Instrumentisierte Anwendung nur ein Threadingparadigma
+    Dabei ist zu beachten dass für jede instrumentierte Anwendung nur ein Threading Paradigma
     (OpenMP oder Pthread) und eine Kommunikationsparadigma (MPI oder SHMEM) ausgewählt werden kann
     und es Einschränkungen bei der Verwendung von Profilingschnittstellen in statischen
     Bibliotheken gibt wenn diese nicht beim Erstellen der fertigen Anwendung aktiviert werden.
@@ -327,7 +327,7 @@
     indem deren Quellcode innerhalb des aktuellen Namensraumes für Variablen durch die `include'
     Funktion evaluiert wird~\longcite{CMake-Documentation}{include}.
 
-    Dabei kann eine bestimmte Datei oder nur der Name des zu ladenen Moduls angegeben werden,
+    Dabei kann eine bestimmte Datei oder nur der Name des zu ladenden Moduls angegeben werden,
     in welchem Falle die den Quellcode des Moduls enthaltene Datei in Verzeichnissen welche in
     der Variable `CMAKE\_MODULE\_PATH' gespeichert sind gesucht wird.
 
@@ -352,7 +352,7 @@
     werden~\longcite{CMake-Documentation}{cmake-packages(7)}.
 
     Dadurch kann ein möglicherweise aufwendiges Untersuchen der Installation auf bestimmte Merkmale
-    vermieden werden, jedoch setzt dies vorraus dass die zu lokalisierende Software mit CMake
+    vermieden werden, jedoch setzt dies voraus dass die zu lokalisierende Software mit CMake
     gebaut wurde oder diese Dateien manuell generiert werden.
 
     Unabhängig von der Art des Package kann bei dessen Suche eine Versionsnummer
@@ -373,7 +373,7 @@
     \subsection{Lokalisierungsmodul}
     Zum Lokalisieren einer Score-P Installation wurde das Modul `FindScoreP' entwickelt weil
     durch die fehlende Verwendung von CMake durch Score-P die Verwendung von Config-Modulen
-    ein manuelles Generieren der benötigten CMake Dateien vorrausgesetzt hätte.
+    ein manuelles Generieren der benötigten CMake Dateien vorausgesetzt hätte.
 
     Es unterstützt neben Versionsnummern, welche mit der Funktion `find\_package\_check\_version'
     auf Kompatibilität hin überprüft werden, das Finden einer kompatiblen Version wenn
@@ -381,7 +381,7 @@
 
     \subsubsection{Komponenten}
     Da eine Score-P Installation Einschränkungen in den unterstützten Profilingschnittstellen und
-    andere Eigenschaften welche für die zu instrumentisierende Anwendung von Bedeutung sind besitzen
+    andere Eigenschaften welche für die zu instrumentierende Anwendung von Bedeutung sind besitzen
     kann können diese durch Komponenten abgefragt werden.
 
     Das Vorhandensein einer Komponente wird durch die Analyse der Ausgabe des Befehls
@@ -399,9 +399,9 @@
     Verwendung mehrerer Prozesse, wobei die Paradigmas `mpi' für MPI und `shmem' für SHMEM existieren.
 
     \paragraph{`IO\_<PARADIGMA>'} repräsentiert die Unterstützung für ein bestimmtes Paradigma zur
-    Aufzeichnug von I/O Operationen, wobei nur das Paradigma `posix' für POSIX Schnittstellen existiert.
+    Aufzeichnung von I/O Operationen, wobei nur das Paradigma `posix' für POSIX Schnittstellen existiert.
 
-    \paragraph{`COMPILER'} repräsentiert die Unterstützung für Compilerinstrumentisierung.
+    \paragraph{`COMPILER'} repräsentiert die Unterstützung für Compilerinstrumentierung.
 
     \paragraph{`CUDA'} repräsentiert die Unterstützung für CUDA.
     
@@ -502,19 +502,19 @@
     \paragraph{`SCOREP\_VERSION\_STRING'} ist eine Variable welche die Version der lokalisierten
     Score-P Installation enthält.
 
-    \subsection{Instrumentisierungsmodul}
+    \subsection{Instrumentierungsmodul}
     Um ein von CMake verwaltetes Projekt zu Instrumentieren stellt dass Modul `ScorePUtilites'
     Funktionen bereit welche sich in eine Low- und High-Level Schnittstelle unterteilen.
 
     \subsubsection{Low-Level Schnittstelle}
     Die Low-Level Schnittstelle ist darauf ausgerichtet den Entwickler einer Anwendung bei deren
-    Instrumentisierung zu unterstützen und Ihm dabei grö{\ss}tmögliche Kontrolle zu ermöglichen.
+    Instrumentierung zu unterstützen und Ihm dabei grö{\ss}tmögliche Kontrolle zu ermöglichen.
 
     Dafür wird eine Funktion namens `scorep\_instrument' bereitgestellt welche es erlaubt eine Liste
     von übergebenen Targets für die Verwendung von Score-P zu konfigurieren.
 
     Dies wird erreicht indem die Targeteigenschaften `<LANG>\_COMPILER\_LAUNCHER' und
-    `<LANG>\_LINKER\_LAUNCHER' auf den zu verwendenen Score-P Befehl gesetzt werden um
+    `<LANG>\_LINKER\_LAUNCHER' auf den zu verwendenden Score-P Befehl gesetzt werden um
     das Compilieren und Linken von Score-P durchführen zu lassen.
 
     Dabei muss durch den Entwickler eine Liste der vom Target verwendeten Programmiersprachen übergeben
@@ -530,22 +530,22 @@
     Score-P Befehls zu ermitteln.
 
     Der Vorteil von Targeteigenschaften im Vergleich zur Verwendung von einem von Score-P bereitgestellten
-    Compilerwrappers ist neben der Fähigkeit der selektiven Instrumentisierung von Teilen eines Projektes
+    Compilerwrappers ist neben der Fähigkeit der selektiven Instrumentierung von Teilen eines Projektes
     die automatische Verwendung des vom Nutzer konfigurierten Compilers beim Konfigurieren des Projektes.
 
     \subsubsection{High-Level Schnittstelle}
     Da wie bereits erwähnt Einschränkungen bei der Auswahl verschiedener Score-P Einstellungen wie zum
-    Beispiel des zu verwendenen Threadingparadigmas existieren kann es bei der manuellen Instrumentisierung
+    Beispiel des zu verwendenden Threading Paradigmas existieren kann es bei der manuellen Instrumentierung
     von einzelnen Targets zu fehlerhaften Konfigurationen kommen.
 
     Um dies zu vermeiden existiert neben der Low-Level Schnittstelle eine High-Level Schnittstelle
-    welche es dem Entwickler der zu instrumentisieren Anwendung erlaubt im Austausch für Kontrolle
-    über den Instrumentisierungsprozess erforderliche Score-P Einstellungen automatisch zu ermitteln.
+    welche es dem Entwickler der zu instrumentieren Anwendung erlaubt im Austausch für Kontrolle
+    über den Instrumentierungsprozess erforderliche Score-P Einstellungen automatisch zu ermitteln.
 
-    Diese Schnittstelle sieht vor dass im Gegensatz zur Low-Level Schnittstelle die Instrumentisierung
+    Diese Schnittstelle sieht vor dass im Gegensatz zur Low-Level Schnittstelle die Instrumentierung
     in mehreren Phasen erfolgt um die übergebenen Informationen zu analysieren.
 
-    Zuerst werden die zu instrumentisierenden Targets mit der Funktion `scorep\_mark' über Targeteigenschaften
+    Zuerst werden die zu instrumentierenden Targets mit der Funktion `scorep\_mark' über Targeteigenschaften
     als solche markiert und die gewünschten Score-P Einstellungen mit einer vom Benutzer vorgegebenen
     Priorität gespeichert.
 
@@ -555,9 +555,9 @@
     Anschlie{\ss}end wird mit der Funktion `scorep\_determine\_instrumentations' durch eine Analyse der Targets
     die endgültigen Score-P Einstellungen ermittelt und ebenfalls als Targeteigenschaften gespeichert.
 
-    Zum Schluss wird eine Score-P Installations lokalisiert und mit der Funktion `scorep\_enable'
+    Zum Schluss wird eine Score-P Installation lokalisiert und mit der Funktion `scorep\_enable'
     die ermittelten Einstellungen über die Low-Level Schnittstelle angewendet, wobei die im vorherigen
-    Schritt erfolgte Analyse die zur Instrumentisierung benötigten Komponenten ermitteln kann.
+    Schritt erfolgte Analyse die zur Instrumentierung benötigten Komponenten ermitteln kann.
 
     \subsubsection{Targetanalyse}
     Die zum Ermitteln der endgültigen Score-P Einstellungen durchgeführte Targetanalyse der High-Level
@@ -572,12 +572,12 @@
     \end{figure}
 
     In dem Beispiel existieren eine Reihe von Targets mit durch gestrichelte Linien dargestellten
-    Abhängigkeiten beim Linken, welche neben statischen Bibliotheken sogennante `standalone Targets'
+    Abhängigkeiten beim Linken, welche neben statischen Bibliotheken sogenannte `standalone Targets'
     beinhalten.
 
-    Diese `standalone Targets' beinhalten alle Targettypen von CMake welche einen sogennanten
+    Diese `standalone Targets' beinhalten alle Targettypen von CMake welche einen sogenannten
     Konstruktor besitzen und damit im Rahmen der meisten Score-P Einstellungen nicht an die
-    zu instrumentisierende Anwendung gebunden sind, wozu neben `EXECUTABLE' und `SHARED\_LIBRARY'
+    zu instrumentierende Anwendung gebunden sind, wozu neben `EXECUTABLE' und `SHARED\_LIBRARY'
     auch Targets des Typs `MODULE\_LIBRARY' zählen.
 
     Zusätzlich handelt es sich bei den analysierten Abhängigkeiten nur um solche welche keine
@@ -589,12 +589,12 @@
 
     Im Gegensatz dazu besitzen statische Bibliotheken keinen eigenen Konstruktor und müssen deswegen
     die gleichen Score-P Einstellungen wie die Programme verwenden in welche sie gelinkt werden, was
-    dazu führen kann dass Targets welche ursprünglich nicht als zu instrumentisierend markiert wurden
-    trotzdem instrumentisiert werden müssen wenn sie gegen eine als solche markierte statische
+    dazu führen kann dass Targets welche ursprünglich nicht als zu instrumentierend markiert wurden
+    trotzdem instrumentiert werden müssen wenn sie gegen eine als solche markierte statische
     Bibliothek linken.
 
     Um diese Einschränkungen nicht zu verletzen werden Mengen von Targets ermittelt welche im
-    Hinblick auf eine Menge von Score-P Einstellungen im Falle einer Instrumentisierung durch
+    Hinblick auf eine Menge von Score-P Einstellungen im Falle einer Instrumentierung durch
     Score-P die gleichen Einstellungswerte besitzen müssen.
 
     Die erste Art dieser Mengen wird im nachfolgendem Text `lokale Abhängigkeiten' genannt und
@@ -602,8 +602,8 @@
     seinen Konstruktor teilen.
 
     Innerhalb dieser Mengen darf nur eine Score-P Konfiguration existieren welche auf alle zu
-    instrumentisierenden Targets angewendet wird, wobei im Falle von instrumentisierten Abhängigkeiten
-    das der Menge zugeordnete standalone Target ebenfalls instrumentisiert wird falls dies nicht
+    instrumentierenden Targets angewendet wird, wobei im Falle von instrumentierten Abhängigkeiten
+    das der Menge zugeordnete standalone Target ebenfalls instrumentiert wird falls dies nicht
     bereits dazu markiert wurde.
 
     Um eindeutige Threading und Kommunikationsparadigma auch über Abhängigkeiten mit eigenen
@@ -614,10 +614,10 @@
     Abhängigkeiten enthalten und nur die verwendeten Threading und Kommunikationsparadigma einschränken.
 
     Gleichzeitig kann ein Target nicht mit mehreren unterschiedlichen Score-P Konfigurationen
-    instrumentisiert werden, was zu Konflikten führen kann wenn ein Target in mehreren dieser
+    instrumentiert werden, was zu Konflikten führen kann wenn ein Target in mehreren dieser
     Mengen enthalten ist und für diese unterschiedliche Score-P Einstellungen ermittelt werden.
 
-    Um dies zu verhindern werden Mengen welche sich zu instrumentisierende Targets mit anderen
+    Um dies zu verhindern werden Mengen welche sich zu instrumentierende Targets mit anderen
     Mengen teilen mit diesen vereint, wobei eine Union-Find-Datenstruktur zum Einsatz kommt.
     
     Im Beispiel würde dies bedeuten dass folgende Mengen existieren:
@@ -625,10 +625,10 @@
     \begin{align*}
         \text{lokale Abhängigkeiten} &= \{ \{ B, D, F, G, C \}, \{ A, D \}, \{ E, H \} \} \\
         \text{globale Abhängigkeiten} &= \{ \{ A, B, C, D, E, F, G, H \} \} \\
-        \text{zu instrumentisierende Targets} &= \{ B, C, G \}
+        \text{zu instrumentierende Targets} &= \{ B, C, G \}
     \end{align*}
 
-    Da einige Mengen keine zu instrumentisierenden Targets enthalten können diese ignoriert werden.
+    Da einige Mengen keine zu instrumentierenden Targets enthalten können diese ignoriert werden.
 
     Falls für eine Score-P Einstellung mehrere Werte innerhalb einer Menge existieren müssen diese
     zusammengeführt oder falls dies nicht möglich ist ein Fehler gemeldet werden.
@@ -653,7 +653,7 @@
     \subsection{bisherige Umsetzung}
     Die bisherige Umsetzung bestand aus der Verwendung der Score-P Wrapper~\longcite{Score-P-Documentation}
     {Score-P Compiler Wrapper Usage}, welche wie bei der Betrachtung von Score-P bereits erwähnt das
-    Setzen bestimmten Umgebungsvariablen vor dem Konfigurieren des CMake Projekts vorraussetzt.
+    Setzen von bestimmten Umgebungsvariablen vor dem Konfigurieren des CMake Projekts voraussetzt.
 
     \begin{lstlisting}[language=bash, caption=Anwendung eines Score-P Wrapper bei GROMACS, gobble=8, showstringspaces=false, basicstyle=\small]
         export SCOREP_WRAPPER_INSTRUMENTER_FLAGS= \
@@ -662,9 +662,9 @@
         -DCMAKE_CXX_COMPILER=scorep-clang++
     \end{lstlisting}
 
-    Neben einer Konfiguration des Projektes außerhalb der von CMake dafür vorgesehen Mechanismen
+    Neben einer Konfiguration des Projektes au{\ss}erhalb der von CMake dafür vorgesehen Mechanismen
     wie zum Beispiel der CMake Sprache erlaubt es diese Umsetzung aufgrund der Verwendung globaler
-    Umgebungsvariablen nicht die Instrumentisierung einzelner Targets zu steuern.
+    Umgebungsvariablen nicht die Instrumentierung einzelner Targets zu steuern.
 
     Dies sorgt in diesem Beispiel dafür dass ein in Score-P existierender Fehler welcher durch das
     fehlerhafte Linken von statischen Bibliotheken ein Bauen der Anwendung unmöglich macht
@@ -672,10 +672,10 @@
 
     Zusätzlich wird der Konfigurationsprozess des Projektes komplizierter weil neben dem Setzen der
     benötigten Umgebungsvariablen die von CMake Parametern abhängige Auswahl der Score-P Einstellungen
-    außerhalb von CMake (zum Beispiel durch ein externes Script oder den Entwickler) erfolgen muss.
+    au{\ss}erhalb von CMake (zum Beispiel durch ein externes Script oder den Entwickler) erfolgen muss.
 
     \subsection{Umsetzung durch Module}
-    Bei der Verwendung der entwickelten CMake Module kann hingegen auf eine Konfiguration außerhalb
+    Bei der Verwendung der entwickelten CMake Module kann hingegen auf eine Konfiguration au{\ss}erhalb
     von CMake verzichtet und damit die Komplexität des Konfigurationsprozesses begrenzt werden.
 
     \begin{lstlisting}[caption=Anwendung der entwickelten Module bei GROMACS, gobble=8, showstringspaces=false, basicstyle=\small]
@@ -744,7 +744,7 @@
     Verwendung eines Score-P Wrappers ein Bauen unmöglich gemacht hatte.
 
     Da dieser beim Linken des `libgromacs' Targets die Reihenfolge der zu linkenden Bibliotheken
-    verändert kann durch eine manuelle Verwendung von `scorep-config' und anschließendem Anpassen
+    verändert kann durch eine manuelle Verwendung von `scorep-config' und anschlie{\ss}endem Anpassen
     der Targeteigenschaften die Anwendung erfolgreich gebaut werden.
 
     \begin{lstlisting}[caption=Workaround für Score-P Bug, gobble=8, showstringspaces=false, basicstyle=\small]
@@ -782,12 +782,12 @@
 
     Um dies genauer zu untersuchen wurde ein Beispielprojekt generiert welches eine gewünschte
     Anzahl an standalone Targets besitzt welche jeweils gegen vier statischen Bibliotheken linken
-    um ein großes Projekt zu simulieren.
+    um ein gro{\ss}es Projekt zu simulieren.
 
     Zusätzlich linkt jedes standalone Target gegen zwei zufällige Targets um die Laufzeit der
     Vereinigung von Abhängigkeitsmengen zu messen.
 
-    Dabei exisitieren zwei Varianten des Beispielprojekts, welche sich durch die Verwendung der
+    Dabei existieren zwei Varianten des Beispielprojekts, welche sich durch die Verwendung der
     `AUTO' der Funktion `scorep\_mark' voneinander unterscheiden.
 
     Diese Option aktiviert dass automatische Erkennen der Score-P Argumente beim Markieren der Targets
@@ -796,7 +796,7 @@
     \begin{center}
         \begin{tikzpicture}
             \begin{axis}[
-                title=Zeit zum Konfigurieren des Beispielprojekts,
+                title=Zeit zum analysieren des Beispielprojekts,
                 xlabel=Anzahl der standalone Targets,
                 ylabel=Zeit in Mikrosekunden,
                 width=0.75\textwidth,
@@ -810,7 +810,7 @@
         \end{tikzpicture}
     \end{center}
 
-    Es ist ersichtlich dass die Laufzeit schneller als linear wächst während das Verzichten auf
+    Es ist ersichtlich dass die Laufzeit superlinear wächst während das Verzichten auf
     die `AUTO' Option nur eine geringe Geschwindigkeitsverbesserung ergibt.
 
 
@@ -819,26 +819,27 @@
     Die entwickelten Module erlauben eine im Vergleich zu der bisherigen Lösung flexiblere und einfachere
     Anwendung von Score-P auf CMake basierte Projekte.
 
-    Durch die Aufteilung in Lokalisierungs und Instrumentisierungsmodul und in Low-Level und High-Level
+    Durch die Aufteilung in Lokalisierungs und Instrumentierungsmodul und in Low-Level und High-Level
     Schnittstelle ist es zudem möglich den Grad der Abstraktion zu wählen.
 
-    Die Kosten für einen höheren Abstraktionsgrad ist jedoch eine Targetanalyse wessen Laufzeit
+    Der Preis für einen höheren Abstraktionsgrad ist jedoch eine Targetanalyse wessen Laufzeit
     mit zunehmender Anzahl an Targets superlinear wächst.
 
     Obwohl diese Zeitspanne bei dem untersuchten `GROMACS' Projekt nur wenige Sekunden dauerte
-    kann sie bei größeren Projekten einen erheblichen Teil der Konfigurationszeit einnehmen, wobei
+    kann sie bei grö{\ss}eren Projekten einen erheblichen Teil der Konfigurationszeit einnehmen, wobei
     die Verwendung einer Schnittstelle mit geringerem Abstraktionsgrad (wie zum Beispiel die Low-Level
     Schnittstelle) die Analysephase auf Kosten von mehr manueller Konfiguration überspringen kann.
-    
+
 
     \section{Ausblick}
-    Wie bereits erwähnt ist das Laufzeitverhalten der Targetanalyse ungeeignet für sehr große Projekte.
+    Wie bereits erwähnt ist das Laufzeitverhalten der Targetanalyse ungeeignet für sehr gro{\ss}e Projekte.
 
-    Um dies zu verbessern kann deren aktuelle Implementierung auf Optimierungspotential hin untersucht
-    oder aus Mangel an komplexeren Datenstrukturen in CMake in ein externes Programm ausgelagert werden.
+    Um dies zu verbessern kann deren aktuelle Implementierung auf Optimierungspotential wie Caching
+    hin untersucht oder wegen dem Mangel an komplexen Datenstrukturen in CMake in ein externes
+    Programm ausgelagert werden.
 
     Zudem können die Annahmen auf welchen die Targetanalyse basiert überprüft und gegebenenfalls von
-    Score-P explizit Dokumentiert werden um zukünftige Verwendungen zu erleichtern.
+    Score-P explizit dokumentiert werden um zukünftige Verwendungen zu erleichtern.
     
     Gleichzeitig trifft Annahme alle dass alle lokalen Abhängigkeiten die selben Score-P Einstellungen
     benötigen nur auf einige Einstellungen zu was für mehr Flexibilität ebenfalls untersucht werden kann.

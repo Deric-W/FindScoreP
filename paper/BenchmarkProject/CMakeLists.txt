@@ -8,6 +8,7 @@ project(
 set(BENCHMARK_LOCALSETS 100 CACHE STRING "Number of local sets to generate")
 set(BENCHMARK_LOCALSIZE 5 CACHE STRING "Size of the initial local sets")
 set(BENCHMARK_CONNECTIONS 2 CACHE STRING "Number of connections to other local sets per local set")
+option(BENCHMARK_AUTO "Whether to use the AUTO option" ON)
 
 include(ScorePUtilities)
 
@@ -39,7 +40,11 @@ endif()
 
 string(TIMESTAMP start "%s%f")
 scorep_discover_targets(allTargets)
-scorep_mark(INSTRUMENT "${allTargets}" LANGS C)
+if(BENCHMARK_AUTO)
+    scorep_mark(INSTRUMENT "${allTargets}" LANGS C AUTO)
+else()
+    scorep_mark(INSTRUMENT "${allTargets}" LANGS C)
+endif()
 scorep_determine_instrumentations("${allTargets}" COMPONENTS_VAR scorepComponents)
 find_package(ScoreP REQUIRED COMPONENTS ${scorepComponents})
 scorep_enable("${allTargets}")
