@@ -816,11 +816,32 @@
 
     \newpage
     \section{Fazit}
-    \correctme{TODO}
+    Die entwickelten Module erlauben eine im Vergleich zu der bisherigen Lösung flexiblere und einfachere
+    Anwendung von Score-P auf CMake basierte Projekte.
+
+    Durch die Aufteilung in Lokalisierungs und Instrumentisierungsmodul und in Low-Level und High-Level
+    Schnittstelle ist es zudem möglich den Grad der Abstraktion zu wählen.
+
+    Die Kosten für einen höheren Abstraktionsgrad ist jedoch eine Targetanalyse wessen Laufzeit
+    mit zunehmender Anzahl an Targets superlinear wächst.
+
+    Obwohl diese Zeitspanne bei dem untersuchten `GROMACS' Projekt nur wenige Sekunden dauerte
+    kann sie bei größeren Projekten einen erheblichen Teil der Konfigurationszeit einnehmen, wobei
+    die Verwendung einer Schnittstelle mit geringerem Abstraktionsgrad (wie zum Beispiel die Low-Level
+    Schnittstelle) die Analysephase auf Kosten von mehr manueller Konfiguration überspringen kann.
     
 
     \section{Ausblick}
-    \correctme{TODO}
+    Wie bereits erwähnt ist das Laufzeitverhalten der Targetanalyse ungeeignet für sehr große Projekte.
+
+    Um dies zu verbessern kann deren aktuelle Implementierung auf Optimierungspotential hin untersucht
+    oder aus Mangel an komplexeren Datenstrukturen in CMake in ein externes Programm ausgelagert werden.
+
+    Zudem können die Annahmen auf welchen die Targetanalyse basiert überprüft und gegebenenfalls von
+    Score-P explizit Dokumentiert werden um zukünftige Verwendungen zu erleichtern.
+    
+    Gleichzeitig trifft Annahme alle dass alle lokalen Abhängigkeiten die selben Score-P Einstellungen
+    benötigen nur auf einige Einstellungen zu was für mehr Flexibilität ebenfalls untersucht werden kann.
 
     \newpage
     \listoffigures
