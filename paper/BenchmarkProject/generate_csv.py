@@ -66,7 +66,7 @@ def process_pending_job(targets: int, process: subprocess.Popen, directory: Temp
     # output is also contained in a CMake error, hence > 1
     if match is None or sum(1 for _ in ERROR_REGEX.finditer(stderr)) > 1:
         raise RuntimeError(f"invalid CMake output: {stderr}")
-    return (str(targets), match.group(1).decode("utf8"))
+    return (str(targets), str(float(match.group(1).decode("utf8")) * 1e-6))
 
 
 if __name__ == "__main__":

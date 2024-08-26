@@ -780,39 +780,51 @@
     Die Kosten der automatischen Anpassung der Score-P Argumente und der dafür nötigen Targetanalyse
     ist eine spürbare Verzögerung beim Konfigurieren von GROMACS.
 
-    Um dies genauer zu untersuchen wurde ein Beispielprojekt generiert welches eine gewünschte
-    Anzahl an standalone Targets besitzt welche jeweils gegen vier statischen Bibliotheken linken
-    um ein gro{\ss}es Projekt zu simulieren.
-
+    Um dies genauer zu untersuchen wurde in~\ref{fig:runtime} ein Beispielprojekt mit einer beliebigen
+    Grö{\ss}e generiert wessen zum Instrumentieren benötigte Zeit gemessen wurde.
+    Das Beispielprojekt besitzt eine gewünschte Anzahl an standalone Targets welche jeweils gegen vier
+    statische Bibliotheken linken um ein gro{\ss}es Projekt zu simulieren.
     Zusätzlich linkt jedes standalone Target gegen zwei zufällige Targets um die Laufzeit der
     Vereinigung von Abhängigkeitsmengen zu messen.
+    Um Rückschlüsse auf das Laufzeitverhalten beim Instrumentieren von Teilmengen der Targets
+    zu ziehen wurden mehrere Messungen mit unterschiedlichen Prozentsätzen an durch `scorep\_mark'
+    markierten Targets durchgeführt.
 
-    Dabei existieren zwei Varianten des Beispielprojekts, welche sich durch die Verwendung der
-    `AUTO' der Funktion `scorep\_mark' voneinander unterscheiden.
+    \begin{figure}
+        \begin{center}
+            \begin{tikzpicture}
+                \begin{axis}[
+                    xlabel=Anzahl der standalone Targets,
+                    ylabel=Zeit in Sekunden,
+                    width=0.75\textwidth,
+                    legend pos=north west
+                ]
+                    \addplot table [x=targets, y=runtime, col sep=comma] {BenchmarkProject/runtime_100.csv};
+                    \addlegendentry{100\% instrumentiert}
+                    \addplot table [x=targets, y=runtime, col sep=comma] {BenchmarkProject/runtime_75.csv};
+                    \addlegendentry{75\% instrumentiert}
+                    \addplot table [x=targets, y=runtime, col sep=comma] {BenchmarkProject/runtime_50.csv};
+                    \addlegendentry{50\% instrumentiert}
+                    \addplot table [x=targets, y=runtime, col sep=comma] {BenchmarkProject/runtime_25.csv};
+                    \addlegendentry{25\% instrumentiert}
+                    \addplot table [x=targets, y=runtime, col sep=comma] {BenchmarkProject/runtime_0.csv};
+                    \addlegendentry{0\% instrumentiert}
+                \end{axis}
+            \end{tikzpicture}
+            \caption{Zeit zum Instrumentieren des Beispielprojekts}
+            \label{fig:runtime}
+        \end{center}
+    \end{figure}
 
-    Diese Option aktiviert dass automatische Erkennen der Score-P Argumente beim Markieren der Targets
-    und analysiert dafür alle Abhängigkeiten des zu markierenden Targets.
-
-    \begin{center}
-        \begin{tikzpicture}
-            \begin{axis}[
-                title=Zeit zum analysieren des Beispielprojekts,
-                xlabel=Anzahl der standalone Targets,
-                ylabel=Zeit in Mikrosekunden,
-                width=0.75\textwidth,
-                legend pos=north west
-            ]
-                \addplot table [x=targets, y=runtime, col sep=comma] {BenchmarkProject/runtime_auto.csv};
-                \addlegendentry{mit AUTO}
-                \addplot table [x=targets, y=runtime, col sep=comma] {BenchmarkProject/runtime_noauto.csv};
-                \addlegendentry{ohne AUTO}
-            \end{axis}
-        \end{tikzpicture}
-    \end{center}
-
-    Es ist ersichtlich dass die Laufzeit superlinear wächst während das Verzichten auf
-    die `AUTO' Option nur eine geringe Geschwindigkeitsverbesserung ergibt.
-
+    Aus den in~\ref{fig:runtime} ermittelten Werten ist ersichtlich dass die Laufzeit superlinear
+    mit der Anzahl der Targets wächst, wobei der Prozentsatz der durch `scorep\_mark' markierten Targets
+    einen starken Einfluss auf deren Steigung besitzt.
+    Dies bedeutet dass bei sehr gro{\ss}en Projekten die benötigte Zeit zur Targetanalyse stark reduziert
+    werden kann indem man die Anzahl der zu instrumentierenden Targets einschränkt.
+    Messungen der benötigten Zeit zum Instrumentieren des GROMACS Projekts bestätigen diese Schlussfolgerung,
+    wobei die benötigte Zeit zum Instrumentieren aller 188 Targets des Projekts 9,14 Sekunden und beim
+    Ausschlie{\ss}en von 160 Targets welche Tests repräsentierten 2,03 Sekunden betrug.
+    Dabei ist anzumerken dass die restliche Konfiguration des Projekts ungefähr 26 Sekunden benötigte.
 
     \newpage
     \section{Fazit}
