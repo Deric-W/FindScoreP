@@ -4,6 +4,12 @@
 \usepackage{pgfplots}
 
 \graphicspath{{graphics/}}
+\lstset{
+    basicstyle=\small\ttfamily,
+    showstringspaces=false,
+    numbers=left,
+    numberstyle=\tiny,
+}
 
 \author{Eric Niklas Wolf}
 \title{Score-P Control via Cmake}
@@ -651,11 +657,11 @@
     am Beispiel der GROMACS~\cite{gromacs} Anwendung gezeigt und mit Alternativen verglichen.
 
     \subsection{bisherige Umsetzung}
-    Die bisherige Umsetzung bestand aus der Verwendung der Score-P Wrapper~\longcite{Score-P-Documentation}
+    Die bisherige Umsetzung~\ref{lst:wrapper} bestand aus der Verwendung der Score-P Wrapper~\longcite{Score-P-Documentation}
     {Score-P Compiler Wrapper Usage}, welche wie bei der Betrachtung von Score-P bereits erwähnt das
     Setzen von bestimmten Umgebungsvariablen vor dem Konfigurieren des CMake Projekts voraussetzt.
 
-    \begin{lstlisting}[language=bash, caption=Anwendung eines Score-P Wrapper bei GROMACS, gobble=8, showstringspaces=false, basicstyle=\small]
+    \begin{lstlisting}[caption=Anwendung eines Score-P Wrapper bei GROMACS, language=bash, gobble=8, label=lst:wrapper]
         export SCOREP_WRAPPER_INSTRUMENTER_FLAGS= \
         "--thread=omp:ompt --io=posix --compiler"
         SCOREP_WRAPPER=off cmake -S . -B build -DGMX_BUILD_OWN_FFTW=ON \
@@ -665,7 +671,6 @@
     Neben einer Konfiguration des Projektes au{\ss}erhalb der von CMake dafür vorgesehen Mechanismen
     wie zum Beispiel der CMake Sprache erlaubt es diese Umsetzung aufgrund der Verwendung globaler
     Umgebungsvariablen nicht die Instrumentierung einzelner Targets zu steuern.
-
     Dies sorgt in diesem Beispiel dafür dass ein in Score-P existierender Fehler welcher durch das
     fehlerhafte Linken von statischen Bibliotheken ein Bauen der Anwendung unmöglich macht
     nur unter hohen Aufwand umgangen werden könnte.
@@ -675,10 +680,10 @@
     au{\ss}erhalb von CMake (zum Beispiel durch ein externes Script oder den Entwickler) erfolgen muss.
 
     \subsection{Umsetzung durch Module}
-    Bei der Verwendung der entwickelten CMake Module kann hingegen auf eine Konfiguration au{\ss}erhalb
-    von CMake verzichtet und damit die Komplexität des Konfigurationsprozesses begrenzt werden.
+    Bei der Verwendung der entwickelten CMake Module~\ref{lst:module} kann hingegen auf eine Konfiguration
+    au{\ss}erhalb von CMake verzichtet und damit die Komplexität des Konfigurationsprozesses begrenzt werden.
 
-    \begin{lstlisting}[caption=Anwendung der entwickelten Module bei GROMACS, gobble=8, showstringspaces=false, basicstyle=\small]
+    \begin{lstlisting}[caption=Anwendung der entwickelten Module bei GROMACS, gobble=8, label=lst:module]
         option(ENABLE_SCOREP "Enable Score-P instrumentation" OFF)
         if(ENABLE_SCOREP)
             include(ScorePUtilities)
@@ -720,34 +725,32 @@
         endif()
     \end{lstlisting}
 
-    Durch die Verwendung einer Option namens `ENABLE\_SCOREP' kann die Entscheidung ob Score-P verwendet
-    werden soll im Rahmen von CMake und damit auch interaktiv durch darauf aufbauende Werkzeuge erfolgen.
+    Durch die Verwendung einer Option namens `ENABLE\_SCOREP'~\ref{lst:activate} kann die Entscheidung ob
+    Score-P verwendet werden soll im Rahmen von CMake und damit auch interaktiv durch darauf aufbauende
+    Werkzeuge erfolgen.
 
-    \begin{lstlisting}[caption=Aktivieren von Score-P bei GROMACS, gobble=8, showstringspaces=false, basicstyle=\small, language=bash]
+    \begin{lstlisting}[caption=Aktivieren von Score-P bei GROMACS, language=bash, gobble=8, label=lst:activate]
         cmake -S . -B build -DGMX_BUILD_OWN_FFTW=ON -DENABLE_SCOREP=ON
     \end{lstlisting}
 
     Zusätzlich kann auf die CMake Projektbeschreibung zugegriffen und damit die benötigten Score-P Argumente
     ermittelt werden, was in diesem Fall ein automatisches Anpassen der Score-P Argumente an die
     durch den Benutzer gewählten Projekteinstellungen ermöglicht.
-
     Die einzige dafür notwendige Veränderung war die Verwendung des `MPI::MPI\_CXX' Targets welches
     als moderne Schnittstelle zu der von CMake lokalisierten MPI Installation von den entwickelten
     Modulen verwendet wird um die Verwendung von MPI zu erkennen.
-
     Da GROMACS aktuell noch ältere Schnittstellen nutzt müsste die Verwendung von MPI alternativ
     manuell basierend auf den von GROMACS bereitgestellten Optionen erkannt werden, wobei es bereits
     Bemühungen gibt auf die moderne Schnittstelle zu wechseln~\longcite{gromacs-git}{Issues/\#3672}.
 
     Neben dem automatisches Anpassen der Score-P Argumente erlaubt der Zugriff auf die CMake
-    Projektbeschreibung auch ein Umgehen des in Score-P existierenden Fehlers welcher bei der
-    Verwendung eines Score-P Wrappers ein Bauen unmöglich gemacht hatte.
-
+    Projektbeschreibung auch ein Umgehen~\ref{lst:workaround} des in Score-P existierenden Fehlers
+    welcher bei der Verwendung eines Score-P Wrappers ein Bauen unmöglich gemacht hatte.
     Da dieser beim Linken des `libgromacs' Targets die Reihenfolge der zu linkenden Bibliotheken
     verändert kann durch eine manuelle Verwendung von `scorep-config' und anschlie{\ss}endem Anpassen
     der Targeteigenschaften die Anwendung erfolgreich gebaut werden.
 
-    \begin{lstlisting}[caption=Workaround für Score-P Bug, gobble=8, showstringspaces=false, basicstyle=\small]
+    \begin{lstlisting}[caption=Workaround für Score-P Bug, gobble=8, label=lst:workaround]
         get_target_property(scorepArguments libgromacs SCOREP_CXX_ARGUMENTS)
         set_property(TARGET libgromacs PROPERTY CXX_LINKER_LAUNCHER)
         execute_process(
