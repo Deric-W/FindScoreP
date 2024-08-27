@@ -1,4 +1,4 @@
-\documentclass[german,proseminar,hyperref,utf8]{zihpub}
+\documentclass[german,proseminar,hyperref,utf8,lof]{zihpub}
 \usepackage{copyrightbox}
 \usepackage{listings}
 \usepackage{pgfplots}
@@ -16,7 +16,52 @@
 \matno{5006150}
 \betreuer{William Robert Williams}
 \bibfiles{references}
-\copyrighterklaerung{\correctme{TODO}}
+\copyrighterklaerung{
+    Die Abbildung~\ref{fig:score-p-overview} und andere Materialien des Score-P Projekts wie das
+    Paper~\cite{Score-P-Paper} und die Dokumentation~\cite{Score-P-Documentation} wurden mit der
+    Erlaubnis von William Robert Williams als Mitglied des Score-P Projekts verwendet.
+    
+    `Permission to copy without fee all or part of this material is granted,
+    provided the University of Tennessee copyright notice and the title of this document appear,
+    and notice is given that copying is by permission of the University of Tennessee'~\shortcite{mpi}{ii}.
+
+    `Permission to copy without fee all or part of this material is granted, provided the OSSS
+    notice and the title of this document appear, and notice is given that copying is by permission
+    of OSSS'~\shortcite{openshmem}{iv}.
+
+    `Permission to copy without fee all or part of this material is granted, provided the OpenMP
+    Architecture Review Board copyright notice and the title of this document appear. Notice is
+    given that copying is by permission of the OpenMP Architecture Review Board'~\shortcite{openmp}{i}.
+
+    `Verbatim copying and distribution of this entire article is permitted in any medium, provided
+    this notice is preserved'~\cite{gomp}.
+
+    `Khronos grants a conditional copyright license to use and reproduce the unmodified Specification
+    for any purpose, without fee or royalty, EXCEPT no licenses to any patent, trademark or other
+    intellectual property rights are granted under these terms'~\shortcite{opencl}{1}.
+
+    `Without limiting the rights under copyright, no part of this document may be reproduced, stored in,
+    or introduced into a retrieval system, or transmitted in any form or by any means (electronic,
+    mechanical, photocopying, recording, or otherwise), or for any purpose, without the express
+    written permission of the authors'~\shortcite{openacc}{2}.
+
+    `You may have the option to download one copy of the software and materials found on the Site
+    ("Materials") on a single computer for your personal, non-commercial internal use only unless
+    specifically licensed to do otherwise by NVIDIA in writing or as allowed by any license terms
+    which accompany or are provided with individual Materials. This is a license, not a transfer
+    of title'~\shortcite{nvidia-docs}{Terms of Service}.
+
+    `Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+    and associated documentation files (the “Software”), to deal in the Software without restriction,
+    including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+    subject to the following conditions: The above copyright notice and this permission notice shall be
+    included in all copies or substantial portions of the Software'~\shortcite{rocm-docs}{ROCm license}.
+
+    CMake und die dazugehörige Dokumentation stehen unter der 3-Clause BSD License~\longcite{CMake-Documentation}{Licensing}.
+
+    Das GROMACS Projekt steht unter der GNU Lesser General Public License~\longcite{gromacs-git}{COPYING}.
+}
 
 \begin{document}
     \section{Einleitung}
@@ -212,13 +257,13 @@
     werden~\longcite{Score-P-Documentation}{Application Measurement}.
 
     \subsection{Anwendung}
-    Um eine Anwendung mit Score-P zu instrumentieren wird ein Befehl namens `scorep' zur Verfügung
+    Um eine Anwendung mit Score-P zu instrumentieren wird ein Befehl namens \texttt{scorep} zur Verfügung
     gestellt welcher vor die Befehle zum Compilieren und Linken der Anwendung gestellt wird.
 
     Das damit assoziierte Programm analysiert den übergebenen Befehl und führt die zur Instrumentierung
     notwendigen Aktionen aus, wobei die Berechnung von benötigten Linkerargumenten und zu linkenden
-    Bibliotheken von einem weiteren Werkzeug namens `scorep-config' durchgeführt wird~\longcite{Score-P-Documentation}
-    {Score-P Tools}.
+    Bibliotheken von einem weiteren Werkzeug namens \texttt{scorep-config} durchgeführt
+    wird~\longcite{Score-P-Documentation}{Score-P Tools}.
 
     Die zu nutzenden Profilingschnittstellen werden über Befehlsargumente ausgewählt oder durch
     Analyse des übergebenen Befehls erkannt, wobei letzteres nicht immer funktioniert~\longcite{Score-P-Documentation}
@@ -230,18 +275,18 @@
     Bibliotheken gibt wenn diese nicht beim Erstellen der fertigen Anwendung aktiviert werden.
 
     Zusätzlich kann die Unterstützung für bestimmte Profilingschnittstellen bei einer Score-P
-    Installation fehlen, was durch die Ausgaben des Befehls `scorep-info' überprüft werden kann.
+    Installation fehlen, was durch die Ausgaben des Befehls \texttt{scorep-info} überprüft werden kann.
 
     Au{\ss}erdem kann bei der Verwendung von Werkzeugen wie CMake und Autotools der konfigurierte Compiler
     bereits vor dem Bauen eines Projektes aufgerufen werden um die Verfügbarkeit von Schnittstellen
     oder andere Informationen für das Konfigurieren des Projektes zu erhalten.
 
-    Da bei der Verwendung von Score-P der `scorep' Befehl als Compiler verwendet wird kann es dabei
+    Da bei der Verwendung von Score-P der \texttt{scorep} Befehl als Compiler verwendet wird kann es dabei
     zu Fehlern kommen obwohl Score-P in dieser Phase nicht benötigt wird~\longcite{Score-P-Documentation}
     {Score-P Compiler Wrapper Usage}.
 
     Um dies zu verhindern stellt Score-P Befehle bereit welche sich normalerweise wie der Befehl
-    `scorep' verhalten, durch das Setzen von bestimmten Umgebungsvariablen jedoch den Aufruf an den
+    \texttt{scorep} verhalten, durch das Setzen von bestimmten Umgebungsvariablen jedoch den Aufruf an den
     verwendeten Compiler durchreichen~\longcite{Score-P-Documentation}{Score-P Compiler Wrapper Usage}.
 
     \newpage
@@ -277,27 +322,27 @@
     von häufigen Aktionen beim Bauen von Programmen, welche nachfolgend erläutert
     werden~\longcite{CMake-Documentation}{cmake-buildsystem(7)}.
 
-    \paragraph{`EXECUTABLE'} Targets repräsentieren ausführbaren Programme.
+    \paragraph{\texttt{EXECUTABLE}} Targets repräsentieren ausführbaren Programme.
 
-    \paragraph{`STATIC\_LIBRARY'} Targets repräsentieren statische Programmbibliotheken welche
+    \paragraph{\texttt{STATIC\_LIBRARY}} Targets repräsentieren statische Programmbibliotheken welche
     beim Linken anderer Programmteile verwendet werden können.
 
-    \paragraph{`SHARED\_LIBRARY'} Targets repräsentieren dynamische Programmbibliotheken welche
+    \paragraph{\texttt{SHARED\_LIBRARY}} Targets repräsentieren dynamische Programmbibliotheken welche
     neben dem Linken anderer Programmteile auch zur Laufzeit geladen werde kann.
 
-    \paragraph{`MODULE\_LIBRARY'} Targets repräsentieren dynamische Programmkomponenten welche
+    \paragraph{\texttt{MODULE\_LIBRARY}} Targets repräsentieren dynamische Programmkomponenten welche
     im Gegensatz zu Bibliotheken nur zur Laufzeit geladen werden.
 
-    \paragraph{`OBJECT\_LIBRARY'} Targets repräsentieren Mengen von bereits zu Objektcode
+    \paragraph{\texttt{OBJECT\_LIBRARY}} Targets repräsentieren Mengen von bereits zu Objektcode
     compilierten Quelltexten.
 
-    \paragraph{`INTERFACE\_LIBRARY'} Targets repräsentieren Ausführungskonfigurationen welche andere
+    \paragraph{\texttt{INTERFACE\_LIBRARY}} Targets repräsentieren Ausführungskonfigurationen welche andere
     Targets durch linken übernehmen können.
 
-    \paragraph{`ALIAS'} Targets repräsentieren andere Targets und können im Gegensatz zu vielen
+    \paragraph{\texttt{ALIAS}} Targets repräsentieren andere Targets und können im Gegensatz zu vielen
     anderen Targets nicht verändert werden.
 
-    \paragraph{`IMPORTED'} Targets repräsentieren bereits existierende Objekte welche z.B. durch
+    \paragraph{\texttt{IMPORTED}} Targets repräsentieren bereits existierende Objekte welche z.B. durch
     installierte Programme zur Verfügung gestellt werden und können deswegen nicht bearbeitet
     oder erneut gebaut werden.
 
@@ -313,29 +358,29 @@
     Eigenschaftswerten an das benutzte Profil, was bei der Evaluation der Projektbeschreibung
     noch unbekannt ist und erst im Rahmen der Konfigurationsgenerierung ermittelt werden kann.
 
-    \paragraph{`<LANG>\_COMPILER\_LAUNCHER'} enthält ein Programm welches verwendet werden soll um
+    \paragraph{\texttt{<LANG>\_COMPILER\_LAUNCHER}} enthält ein Programm welches verwendet werden soll um
     Aufrufe des Compiler einer bestimmten Sprache durchzuführen.
 
-    \paragraph{`<LANG>\_LINKER\_LAUNCHER'} verhält sich wie `<LANG>\_COMPILER\_LAUNCHER' für Aufrufe des Linkers.
+    \paragraph{\texttt{<LANG>\_LINKER\_LAUNCHER}} verhält sich wie \texttt{<LANG>\_COMPILER\_LAUNCHER} für Aufrufe des Linkers.
 
-    \paragraph{`LINK\_LIBRARIES'} enthält Bibliotheken oder Targets gegen welche das Target gelinkt
+    \paragraph{\texttt{LINK\_LIBRARIES}} enthält Bibliotheken oder Targets gegen welche das Target gelinkt
     werden soll wobei die Verwendung von `generator expressions' erlaubt ist.
 
-    \paragraph{`INTERFACE\_LINK\_LIBRARIES'} enthält Bibliotheken oder Targets gegen welche beim Linken
+    \paragraph{\texttt{INTERFACE\_LINK\_LIBRARIES}} enthält Bibliotheken oder Targets gegen welche beim Linken
     gegen das aktuelle Target zusätzlich gelinkt werden soll wobei die Verwendung von
     `generator expressions' erlaubt ist.
 
-    Dabei ist es unerheblich ob das Linken im Rahmen von `LINK\_LIBRARIES' oder durch Verweise
-    in `INTERFACE\_LINK\_LIBRARIES' anderer gelinkter Targets stattfindet.
+    Dabei ist es unerheblich ob das Linken im Rahmen von \texttt{LINK\_LIBRARIES} oder durch Verweise
+    in \texttt{INTERFACE\_LINK\_LIBRARIES} anderer gelinkter Targets stattfindet.
 
     \subsection{Module}
     CMake erlaubt es Benutzern Programme welche in der CMake Sprache geschrieben sind wiederzuverwenden
-    indem deren Quellcode innerhalb des aktuellen Namensraumes für Variablen durch die `include'
+    indem deren Quellcode innerhalb des aktuellen Namensraumes für Variablen durch die \texttt{include}
     Funktion evaluiert wird~\longcite{CMake-Documentation}{include}.
 
     Dabei kann eine bestimmte Datei oder nur der Name des zu ladenden Moduls angegeben werden,
     in welchem Falle die den Quellcode des Moduls enthaltene Datei in Verzeichnissen welche in
-    der Variable `CMAKE\_MODULE\_PATH' gespeichert sind gesucht wird.
+    der Variable \texttt{CMAKE\_MODULE\_PATH} gespeichert sind gesucht wird.
 
     Dem gegenüber steht der Begriff des `Package', welcher externe Software welche durch den
     Benutzer beim Bauen des Projektes angefordert werden kann
@@ -381,7 +426,7 @@
     durch die fehlende Verwendung von CMake durch Score-P die Verwendung von Config-Modulen
     ein manuelles Generieren der benötigten CMake Dateien vorausgesetzt hätte.
 
-    Es unterstützt neben Versionsnummern, welche mit der Funktion `find\_package\_check\_version'
+    Es unterstützt neben Versionsnummern, welche mit der Funktion \texttt{find\_package\_check\_version}
     auf Kompatibilität hin überprüft werden, das Finden einer kompatiblen Version wenn
     mehrere verschiedene Versionen von Score-P installiert sind.
 
@@ -391,58 +436,58 @@
     kann können diese durch Komponenten abgefragt werden.
 
     Das Vorhandensein einer Komponente wird durch die Analyse der Ausgabe des Befehls
-    `scorep-info config-summary' ermittelt, wobei die verfügbaren Komponenten und ihre
+    \texttt{scorep-info config-summary} ermittelt, wobei die verfügbaren Komponenten und ihre
     Bedeutungen nachfolgend erläutert werden.
 
-    \paragraph{`<BACKEND>COMPILER\_<SPRACHE>\_<COMPILER>'} repräsentiert den von einem Score-P Backend
-    zum Compilieren einer Sprache verwendeten Compiler, wobei die Backends `MPI\_' für MPI,
-    `SHMEM\_' für SHMEM und das leere Backend für den standardmä{\ss}ig verwendeten Compiler existieren.
+    \paragraph{\texttt{<BACKEND>COMPILER\_<SPRACHE>\_<COMPILER>}} repräsentiert den von einem Score-P Backend
+    zum Compilieren einer Sprache verwendeten Compiler, wobei die Backends \texttt{MPI\_} für MPI,
+    \texttt{SHMEM\_} für SHMEM und das leere Backend für den standardmä{\ss}ig verwendeten Compiler existieren.
 
     Dies ermöglicht es sicherzustellen dass der von Score-P verwendete Compiler mit dem Compiler
     welcher für das zu instrumentierende Projekt konfiguriert wurde übereinstimmt.
 
-    \paragraph{`MPP\_<PARADIGMA>'} repräsentiert die Unterstützung für ein bestimmtes Paradigma zur
-    Verwendung mehrerer Prozesse, wobei die Paradigmas `mpi' für MPI und `shmem' für SHMEM existieren.
+    \paragraph{\texttt{MPP\_<PARADIGMA>}} repräsentiert die Unterstützung für ein bestimmtes Paradigma zur
+    Verwendung mehrerer Prozesse, wobei die Paradigmas \texttt{mpi} für MPI und \texttt{shmem} für SHMEM existieren.
 
-    \paragraph{`IO\_<PARADIGMA>'} repräsentiert die Unterstützung für ein bestimmtes Paradigma zur
-    Aufzeichnung von I/O Operationen, wobei nur das Paradigma `posix' für POSIX Schnittstellen existiert.
+    \paragraph{\texttt{IO\_<PARADIGMA>}} repräsentiert die Unterstützung für ein bestimmtes Paradigma zur
+    Aufzeichnung von I/O Operationen, wobei nur das Paradigma \texttt{posix} für POSIX Schnittstellen existiert.
 
-    \paragraph{`COMPILER'} repräsentiert die Unterstützung für Compilerinstrumentierung.
+    \paragraph{\texttt{COMPILER}} repräsentiert die Unterstützung für Compilerinstrumentierung.
 
-    \paragraph{`CUDA'} repräsentiert die Unterstützung für CUDA.
+    \paragraph{\texttt{CUDA}} repräsentiert die Unterstützung für CUDA.
     
-    \paragraph{`POMP'} repräsentiert die Unterstützung für eine nicht näher beschriebene Schnittstelle
+    \paragraph{\texttt{POMP}} repräsentiert die Unterstützung für eine nicht näher beschriebene Schnittstelle
     names `OPARI2 pomp user instrumentation'.
 
-    \paragraph{`OMP\_<SPRACHE>'} repräsentiert die Unterstützung von OpenMP für eine bestimmte Sprache.
+    \paragraph{\texttt{OMP\_<SPRACHE>}} repräsentiert die Unterstützung von OpenMP für eine bestimmte Sprache.
 
-    \paragraph{`OPARI2'} repräsentiert die Verfügbarkeit von Opari2.
+    \paragraph{\texttt{OPARI2}} repräsentiert die Verfügbarkeit von Opari2.
 
-    \paragraph{`OMPT'} repräsentiert die Unterstützung der OMPT Schnittstelle.
+    \paragraph{\texttt{OMPT}} repräsentiert die Unterstützung der OMPT Schnittstelle.
 
-    \paragraph{`PDT'} repräsentiert die Unterstützung einer nicht näher beschriebenen Schnittstelle
+    \paragraph{\texttt{PDT}} repräsentiert die Unterstützung einer nicht näher beschriebenen Schnittstelle
     namens `PDT'.
 
-    \paragraph{`OPENCL'} repräsentiert die Unterstützung von OpenCL.
+    \paragraph{\texttt{OPENCL}} repräsentiert die Unterstützung von OpenCL.
 
-    \paragraph{`OPENACC'} repräsentiert die Unterstützung von OpenACC.
+    \paragraph{\texttt{OPENACC}} repräsentiert die Unterstützung von OpenACC.
 
-    \paragraph{`MEMORY'} repräsentiert die Unterstützung des Aufzeichnens der Speicherverwendung.
+    \paragraph{\texttt{MEMORY}} repräsentiert die Unterstützung des Aufzeichnens der Speicherverwendung.
 
-    \paragraph{`LIBWRAP'} repräsentiert die Unterstützung von Bibliothekswrappern.
+    \paragraph{\texttt{LIBWRAP}} repräsentiert die Unterstützung von Bibliothekswrappern.
 
-    \paragraph{`KOKKOS'} repräsentiert die Unterstützung von Kokkos.
+    \paragraph{\texttt{KOKKOS}} repräsentiert die Unterstützung von Kokkos.
 
-    \paragraph{`HIP'} repräsentiert die Unterstützung von HIP.
+    \paragraph{\texttt{HIP}} repräsentiert die Unterstützung von HIP.
 
     \subsubsection{Lokalisierungsmechanismus}
     Der Mechanismus zum Lokalisieren einer Score-P Installation wird nachfolgend erläutert.
 
     \begin{enumerate}
-        \item Lokalisieren von `scorep-config'
+        \item Lokalisieren von \texttt{scorep-config}
 
-        Dies wird für das Ermitteln des Installationsortes benötigt und durch die CMake Funktion
-        `find\_program' durchgeführt.
+        Dies wird für das Ermitteln des Installationsortes benötigt und durch die CMake Funktion \\
+        \texttt{find\_program} durchgeführt.
 
         Dabei wird bereits für jede lokalisierte Installation überprüft ob diese mit der übergebenen
         Version und den übergebenen Komponenten kompatibel ist um im Falle von mehreren Installationen
@@ -450,16 +495,16 @@
 
         \item Ermitteln der Version und des Installationsortes
 
-        Dies wird durch die Befehle `scorep-config --version' und `scorep-config --prefix' erreicht.
+        Dies wird durch die Befehle \texttt{scorep-config --version} und \texttt{scorep-config --prefix} erreicht.
 
-        \item Lokalisieren von `scorep' und `scorep-info'
+        \item Lokalisieren von \texttt{scorep} und \texttt{scorep-info}
 
-        Dabei kommt wieder die Funktion `find\_program' zum Einsatz wobei die Suche auf den Installationsort
+        Dabei kommt wieder die Funktion \texttt{find\_program} zum Einsatz wobei die Suche auf den Installationsort
         beschränkt wird um zu verhindern dass Programme anderer Installationen lokalisiert werden.
 
         \item Überprüfen des Vorhandenseins übergebener Komponenten
 
-        Obwohl dies beim Lokalisieren von `scorep-config' bereits durchgeführt wurde wird es erneut
+        Obwohl dies beim Lokalisieren von \texttt{scorep-config} bereits durchgeführt wurde wird es erneut
         durchgeführt um bei der Ermittlung des Lokalisierungsergebnisses benötigte Variablen zu setzen.
 
         \item Erstellen importierter Targets
@@ -472,7 +517,7 @@
         Dies sorgt dafür das unter anderem Variablen gesetzt werden welche CMake signalisieren ob das
         Lokalisieren erfolgreich war.
 
-        Weil die dafür von CMake bereitgestellte Funktion `find\_package\_handle\_standard\_args' Informationen
+        Weil die dafür von CMake bereitgestellte Funktion \texttt{find\_package\_handle\_standard\_args} Informationen
         über die existierenden Komponenten in Form von gesetzten Variablen benötigt wird deren
         Vorhandensein vorher erneut überprüft.
     \end{enumerate}
@@ -481,31 +526,31 @@
     Im Falle der erfolgreichen Lokalisierung einer Score-P Installation werden die folgenden
     Targets und Variablen erstellt.
 
-    \paragraph{`ScoreP::ScoreP'} ist ein importiertes Target welches die ausführbare Datei
-    des `scorep' Befehls repräsentiert.
+    \paragraph{\texttt{ScoreP::ScoreP}} ist ein importiertes Target welches die ausführbare Datei
+    des \texttt{scorep} Befehls repräsentiert.
 
-    Der Pfad dieser Datei wird zusätzlich in der Variable `SCOREP\_EXECUTABLE' gespeichert.
+    Der Pfad dieser Datei wird zusätzlich in der Variable \texttt{SCOREP\_EXECUTABLE} gespeichert.
 
-    \paragraph{`ScoreP::Config'} ist ein importiertes Target welches die ausführbare Datei
-    des `scorep-config' Befehls repräsentiert.
+    \paragraph{\texttt{ScoreP::Config}} ist ein importiertes Target welches die ausführbare Datei
+    des \texttt{scorep-config} Befehls repräsentiert.
 
-    Der Pfad dieser Datei wird zusätzlich in der Variable `SCOREP\_CONFIG\_EXECUTABLE' gespeichert.
+    Der Pfad dieser Datei wird zusätzlich in der Variable \texttt{SCOREP\_CONFIG\_EXECUTABLE} gespeichert.
 
-    \paragraph{`ScoreP::Info'} ist ein importiertes Target welches die ausführbare Datei
-    des `scorep-info' Befehls repräsentiert.
+    \paragraph{\texttt{ScoreP::Info}} ist ein importiertes Target welches die ausführbare Datei
+    des \texttt{scorep-info} Befehls repräsentiert.
 
-    Der Pfad dieser Datei wird zusätzlich in der Variable `SCOREP\_INFO\_EXECUTABLE' gespeichert.
+    Der Pfad dieser Datei wird zusätzlich in der Variable \texttt{SCOREP\_INFO\_EXECUTABLE} gespeichert.
 
-    \paragraph{`SCOREP\_FOUND'} ist eine Variable welche einen Wahrheitswert enthält der angibt
+    \paragraph{\texttt{SCOREP\_FOUND}} ist eine Variable welche einen Wahrheitswert enthält der angibt
     ob die Lokalisierung erfolgreich war.
 
     Im Gegensatz zu den anderen Ausgaben wird diese auch im Falle einer fehlgeschlagenen Lokalisierung
     gesetzt.
 
-    \paragraph{`SCOREP\_<KOMPONENTE>\_FOUND'} ist eine Variable welche einen Wahrheitswert enthält
+    \paragraph{\texttt{SCOREP\_<KOMPONENTE>\_FOUND}} ist eine Variable welche einen Wahrheitswert enthält
     der angibt ob eine bestimmte übergebene Komponente gefunden wurde.
 
-    \paragraph{`SCOREP\_VERSION\_STRING'} ist eine Variable welche die Version der lokalisierten
+    \paragraph{\texttt{SCOREP\_VERSION\_STRING}} ist eine Variable welche die Version der lokalisierten
     Score-P Installation enthält.
 
     \subsection{Instrumentierungsmodul}
@@ -516,11 +561,11 @@
     Die Low-Level Schnittstelle ist darauf ausgerichtet den Entwickler einer Anwendung bei deren
     Instrumentierung zu unterstützen und Ihm dabei grö{\ss}tmögliche Kontrolle zu ermöglichen.
 
-    Dafür wird eine Funktion namens `scorep\_instrument' bereitgestellt welche es erlaubt eine Liste
+    Dafür wird eine Funktion namens \texttt{scorep\_instrument} bereitgestellt welche es erlaubt eine Liste
     von übergebenen Targets für die Verwendung von Score-P zu konfigurieren.
 
-    Dies wird erreicht indem die Targeteigenschaften `<LANG>\_COMPILER\_LAUNCHER' und
-    `<LANG>\_LINKER\_LAUNCHER' auf den zu verwendenden Score-P Befehl gesetzt werden um
+    Dies wird erreicht indem die Targeteigenschaften \texttt{<LANG>\_COMPILER\_LAUNCHER} und \\
+    \texttt{<LANG>\_LINKER\_LAUNCHER} auf den zu verwendenden Score-P Befehl gesetzt werden um
     das Compilieren und Linken von Score-P durchführen zu lassen.
 
     Dabei muss durch den Entwickler eine Liste der vom Target verwendeten Programmiersprachen übergeben
@@ -551,17 +596,17 @@
     Diese Schnittstelle sieht vor dass im Gegensatz zur Low-Level Schnittstelle die Instrumentierung
     in mehreren Phasen erfolgt um die übergebenen Informationen zu analysieren.
 
-    Zuerst werden die zu instrumentierenden Targets mit der Funktion `scorep\_mark' über Targeteigenschaften
+    Zuerst werden die zu instrumentierenden Targets mit der Funktion \texttt{scorep\_mark} über Targeteigenschaften
     als solche markiert und die gewünschten Score-P Einstellungen mit einer vom Benutzer vorgegebenen
     Priorität gespeichert.
 
     Die Priorität ermöglicht es bei der Targetanalyse dem Benutzer seine Präferenzen im Falle von
     in Konflikt stehenden Einstellungswerten auszudrücken.
 
-    Anschlie{\ss}end wird mit der Funktion `scorep\_determine\_instrumentations' durch eine Analyse der Targets
+    Anschlie{\ss}end wird mit der Funktion \texttt{scorep\_determine\_instrumentations} durch eine Analyse der Targets
     die endgültigen Score-P Einstellungen ermittelt und ebenfalls als Targeteigenschaften gespeichert.
 
-    Zum Schluss wird eine Score-P Installation lokalisiert und mit der Funktion `scorep\_enable'
+    Zum Schluss wird eine Score-P Installation lokalisiert und mit der Funktion \texttt{scorep\_enable}
     die ermittelten Einstellungen über die Low-Level Schnittstelle angewendet, wobei die im vorherigen
     Schritt erfolgte Analyse die zur Instrumentierung benötigten Komponenten ermitteln kann.
 
@@ -583,8 +628,8 @@
 
     Diese `standalone Targets' beinhalten alle Targettypen von CMake welche einen sogenannten
     Konstruktor besitzen und damit im Rahmen der meisten Score-P Einstellungen nicht an die
-    zu instrumentierende Anwendung gebunden sind, wozu neben `EXECUTABLE' und `SHARED\_LIBRARY'
-    auch Targets des Typs `MODULE\_LIBRARY' zählen.
+    zu instrumentierende Anwendung gebunden sind, wozu neben \texttt{EXECUTABLE} und \texttt{SHARED\_LIBRARY}
+    auch Targets des Typs \texttt{MODULE\_LIBRARY} zählen.
 
     Zusätzlich handelt es sich bei den analysierten Abhängigkeiten nur um solche welche keine
     Generatorausdrücke verwenden weil diese sonst nicht während des Konfigurierens des CMake
@@ -657,9 +702,10 @@
     am Beispiel der GROMACS~\cite{gromacs} Anwendung gezeigt und mit Alternativen verglichen.
 
     \subsection{bisherige Umsetzung}
-    Die bisherige Umsetzung~\ref{lst:wrapper} bestand aus der Verwendung der Score-P Wrapper~\longcite{Score-P-Documentation}
-    {Score-P Compiler Wrapper Usage}, welche wie bei der Betrachtung von Score-P bereits erwähnt das
-    Setzen von bestimmten Umgebungsvariablen vor dem Konfigurieren des CMake Projekts voraussetzt.
+    Die bisherige Umsetzung bestand wie in Listing~\ref{lst:wrapper} dargestellt aus der Verwendung der
+    Score-P Wrapper~\longcite{Score-P-Documentation}{Score-P Compiler Wrapper Usage}, welche wie bei
+    der Betrachtung von Score-P bereits erwähnt das Setzen von bestimmten Umgebungsvariablen vor dem
+    Konfigurieren des CMake Projekts voraussetzt.
 
     \begin{lstlisting}[caption=Anwendung eines Score-P Wrapper bei GROMACS, language=bash, gobble=8, label=lst:wrapper]
         export SCOREP_WRAPPER_INSTRUMENTER_FLAGS= \
@@ -680,8 +726,9 @@
     au{\ss}erhalb von CMake (zum Beispiel durch ein externes Script oder den Entwickler) erfolgen muss.
 
     \subsection{Umsetzung durch Module}
-    Bei der Verwendung der entwickelten CMake Module~\ref{lst:module} kann hingegen auf eine Konfiguration
-    au{\ss}erhalb von CMake verzichtet und damit die Komplexität des Konfigurationsprozesses begrenzt werden.
+    Bei der in Listing~\ref{lst:module} dargestellten Verwendung der entwickelten CMake Module kann
+    hingegen auf eine Konfiguration au{\ss}erhalb von CMake verzichtet und damit die Komplexität
+    des Konfigurationsprozesses begrenzt werden.
 
     \begin{lstlisting}[caption=Anwendung der entwickelten Module bei GROMACS, gobble=8, label=lst:module]
         option(ENABLE_SCOREP "Enable Score-P instrumentation" OFF)
@@ -725,9 +772,9 @@
         endif()
     \end{lstlisting}
 
-    Durch die Verwendung einer Option namens `ENABLE\_SCOREP'~\ref{lst:activate} kann die Entscheidung ob
-    Score-P verwendet werden soll im Rahmen von CMake und damit auch interaktiv durch darauf aufbauende
-    Werkzeuge erfolgen.
+    Durch die Verwendung einer Option namens \texttt{ENABLE\_SCOREP} kann wie in Listing~\ref{lst:activate}
+    dargestellt die Entscheidung ob Score-P verwendet werden soll im Rahmen von CMake und damit auch
+    interaktiv durch darauf aufbauende Werkzeuge erfolgen.
 
     \begin{lstlisting}[caption=Aktivieren von Score-P bei GROMACS, language=bash, gobble=8, label=lst:activate]
         cmake -S . -B build -DGMX_BUILD_OWN_FFTW=ON -DENABLE_SCOREP=ON
@@ -736,7 +783,7 @@
     Zusätzlich kann auf die CMake Projektbeschreibung zugegriffen und damit die benötigten Score-P Argumente
     ermittelt werden, was in diesem Fall ein automatisches Anpassen der Score-P Argumente an die
     durch den Benutzer gewählten Projekteinstellungen ermöglicht.
-    Die einzige dafür notwendige Veränderung war die Verwendung des `MPI::MPI\_CXX' Targets welches
+    Die einzige dafür notwendige Veränderung war die Verwendung des \texttt{MPI::MPI\_CXX} Targets welches
     als moderne Schnittstelle zu der von CMake lokalisierten MPI Installation von den entwickelten
     Modulen verwendet wird um die Verwendung von MPI zu erkennen.
     Da GROMACS aktuell noch ältere Schnittstellen nutzt müsste die Verwendung von MPI alternativ
@@ -744,11 +791,12 @@
     Bemühungen gibt auf die moderne Schnittstelle zu wechseln~\longcite{gromacs-git}{Issues/\#3672}.
 
     Neben dem automatisches Anpassen der Score-P Argumente erlaubt der Zugriff auf die CMake
-    Projektbeschreibung auch ein Umgehen~\ref{lst:workaround} des in Score-P existierenden Fehlers
+    Projektbeschreibung auch ein Umgehen des in Score-P existierenden Fehlers
     welcher bei der Verwendung eines Score-P Wrappers ein Bauen unmöglich gemacht hatte.
-    Da dieser beim Linken des `libgromacs' Targets die Reihenfolge der zu linkenden Bibliotheken
-    verändert kann durch eine manuelle Verwendung von `scorep-config' und anschlie{\ss}endem Anpassen
-    der Targeteigenschaften die Anwendung erfolgreich gebaut werden.
+    Da dieser beim Linken des \texttt{libgromacs} Targets die Reihenfolge der zu linkenden Bibliotheken
+    verändert kann wie in Listing~\ref{lst:workaround} dargestellt durch eine manuelle Verwendung von
+    \texttt{scorep-config} und anschlie{\ss}endem Anpassen der Targeteigenschaften die Anwendung erfolgreich
+    gebaut werden.
 
     \begin{lstlisting}[caption=Workaround für Score-P Bug, gobble=8, label=lst:workaround]
         get_target_property(scorepArguments libgromacs SCOREP_CXX_ARGUMENTS)
@@ -783,14 +831,14 @@
     Die Kosten der automatischen Anpassung der Score-P Argumente und der dafür nötigen Targetanalyse
     ist eine spürbare Verzögerung beim Konfigurieren von GROMACS.
 
-    Um dies genauer zu untersuchen wurde in~\ref{fig:runtime} ein Beispielprojekt mit einer beliebigen
-    Grö{\ss}e generiert wessen zum Instrumentieren benötigte Zeit gemessen wurde.
+    Um dies genauer zu untersuchen wurde in Abbildung~\ref{fig:runtime} ein Beispielprojekt mit einer
+    beliebigen Grö{\ss}e generiert wessen zum Instrumentieren benötigte Zeit gemessen wurde.
     Das Beispielprojekt besitzt eine gewünschte Anzahl an standalone Targets welche jeweils gegen vier
     statische Bibliotheken linken um ein gro{\ss}es Projekt zu simulieren.
     Zusätzlich linkt jedes standalone Target gegen zwei zufällige Targets um die Laufzeit der
     Vereinigung von Abhängigkeitsmengen zu messen.
     Um Rückschlüsse auf das Laufzeitverhalten beim Instrumentieren von Teilmengen der Targets
-    zu ziehen wurden mehrere Messungen mit unterschiedlichen Prozentsätzen an durch `scorep\_mark'
+    zu ziehen wurden mehrere Messungen mit unterschiedlichen Prozentsätzen an durch \texttt{scorep\_mark}
     markierten Targets durchgeführt.
 
     \begin{figure}
@@ -819,8 +867,8 @@
         \end{center}
     \end{figure}
 
-    Aus den in~\ref{fig:runtime} ermittelten Werten ist ersichtlich dass die Laufzeit superlinear
-    mit der Anzahl der Targets wächst, wobei der Prozentsatz der durch `scorep\_mark' markierten Targets
+    Aus den in Abbildung~\ref{fig:runtime} ermittelten Werten ist ersichtlich dass die Laufzeit superlinear
+    mit der Anzahl der Targets wächst, wobei der Prozentsatz der durch \texttt{scorep\_mark} markierten Targets
     einen starken Einfluss auf deren Steigung besitzt.
     Dies bedeutet dass bei sehr gro{\ss}en Projekten die benötigte Zeit zur Targetanalyse stark reduziert
     werden kann indem man die Anzahl der zu instrumentierenden Targets einschränkt.
@@ -858,7 +906,4 @@
     
     Gleichzeitig trifft Annahme alle dass alle lokalen Abhängigkeiten die selben Score-P Einstellungen
     benötigen nur auf einige Einstellungen zu was für mehr Flexibilität ebenfalls untersucht werden kann.
-
-    \newpage
-    \listoffigures
 \end{document}
