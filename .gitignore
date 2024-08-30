@@ -17,3 +17,4 @@ paper/*
 !paper/graphics/
 !paper/patches/
 !paper/BenchmarkProject/
+!paper/README.md

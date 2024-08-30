@@ -31,6 +31,12 @@ See [`UTILITIES.md`](docs/UTILITIES.md) and [`AUTODETECT.md`](docs/AUTODETECT.md
 
 See [`FINDMODULE.md`](docs/FINDMODULE.md)
 
+## Paper
+
+This project was created as part of a introductory seminar course, which produced a paper.
+
+Its source code and attachments can be found in the `paper` subdirectory.
+
 ## Tests
 
 Testing using the [CTest](https://cmake.org/cmake/help/latest/module/CTest.html)

@@ -78,7 +78,7 @@
     Jedoch fokussieren sich die meisten Tools auf bestimmte Anwendungsfälle und Technologien,
     was dazu führt dass sie je nach Anwendungsfall in Kombination eingesetzt werden müssen.
 
-    Dies wiederum kann dazu führen dass eine Anwendung mehrfach mit unterschiedlichen Werzeugen
+    Dies wiederum kann dazu führen dass eine Anwendung mehrfach mit unterschiedlichen Werkzeugen
     analysiert werden muss wenn diese inkompatibel zueinander sind, was wiederum Redundanz
     und Mehraufwand bedeutet.
 
@@ -137,14 +137,14 @@
     Um Aufrufe von Funktionen aufzuzeichnen kann Score-P den verwendeten Compiler
     anweisen das Betreten und Verlassen dieser durch Aufrufe spezieller Funktionen
     zu markieren~\longcite{Score-P-Documentation}{Application Instrumentation}.
-    Dabei ist zu beachten das die Namen der entstehenden Regionen und Art wie diese generiert
+    Dabei ist zu beachten dass die Namen der entstehenden Regionen und Art wie diese generiert
     werden von dem verwendeten Compiler abhängig ist.
     Dies ist besonders wichtig wenn die zu instrumentierende Anwendung in C++ geschrieben ist,
     weil einige Compiler kein Filtern der zu instrumentierenden Funktionen erlauben und C++
     Anwendungen häufig viele kleine Funktionen besitzen wessen Instrumentierung einen signifikanten
     Overhead erzeugen kann~\longcite{Score-P-Documentation}{Application Instrumentation}.
 
-    \paragraph{standardisierte Schnittstellen}
+    \paragraph{Standardisierte Schnittstellen}
     Viele der von Score-P unterstützten Technologien besitzen eine standardisierte Schnittstelle
     welche dafür gedacht ist externen Programmen wie Score-P zum Überwachen und Messen einer Anwendung
     Zugriff auf interne Events zu ermöglichen.
@@ -595,7 +595,7 @@
     Mengen enthalten ist und für diese unterschiedliche Score-P Einstellungen ermittelt werden.
     Um dies zu verhindern werden Mengen welche sich zu instrumentierende Targets mit anderen
     Mengen teilen mit diesen vereint, wobei eine Union-Find-Datenstruktur zum Einsatz kommt.
-    Da es durch \texttt{ALIAS} Targets ein Target mehrere Namen besitzen kann und damit das Vorkommen
+    Da durch \texttt{ALIAS} Targets ein Target mehrere Namen besitzen und damit das Vorkommen
     in mehreren Mengen übersehen werden kann wird beim Hinzufügen von Targets zu einer Menge überprüft
     ob es sich dabei um ein Alias handelt und falls dies zutrifft stattdessen das repräsentierte Target
     der Menge hinzugefügt.
@@ -851,8 +851,8 @@
     Schnittstelle ist es zudem möglich den Grad der Abstraktion zu wählen.
 
     Der Preis für einen höheren Abstraktionsgrad ist jedoch eine Targetanalyse wessen Laufzeit
-    mit zunehmender Anzahl an Targets superlinear wächst.
-    Obwohl diese Zeitspanne bei dem untersuchten `GROMACS' Projekt nur wenige Sekunden dauerte
+    mit zunehmender Anzahl an Targets linear wächst.
+    Obwohl diese Zeitspanne bei dem untersuchten `GROMACS' Projekt nur wenige Sekunden betrug
     kann sie bei grö{\ss}eren Projekten einen erheblichen Teil der Konfigurationszeit einnehmen, wobei
     mit der Projektgrö{\ss}e die Anzahl an Targets und nicht die Anzahl an Codezeilen gemeint ist.
     Sollte eine Reduktion der zu instrumentierenden Targets keine Lösung darstellen kann alternativ
