@@ -36,10 +36,6 @@
     `Verbatim copying and distribution of this entire article is permitted in any medium, provided
     this notice is preserved'~\cite{gomp}.
 
-    `Khronos grants a conditional copyright license to use and reproduce the unmodified Specification
-    for any purpose, without fee or royalty, EXCEPT no licenses to any patent, trademark or other
-    intellectual property rights are granted under these terms'~\shortcite{opencl}{1}.
-
     `Without limiting the rights under copyright, no part of this document may be reproduced, stored in,
     or introduced into a retrieval system, or transmitted in any form or by any means (electronic,
     mechanical, photocopying, recording, or otherwise), or for any purpose, without the express
@@ -51,14 +47,20 @@
     which accompany or are provided with individual Materials. This is a license, not a transfer
     of title'~\shortcite{nvidia-docs}{Terms of Service}.
 
-    `Permission is hereby granted, free of charge, to any person obtaining a copy of this software
-    and associated documentation files (the “Software”), to deal in the Software without restriction,
-    including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
-    and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
-    subject to the following conditions: The above copyright notice and this permission notice shall be
-    included in all copies or substantial portions of the Software'~\shortcite{rocm-docs}{ROCm license}.
-
-    CMake und die dazugehörige Dokumentation stehen unter der 3-Clause BSD License~\longcite{CMake-Documentation}{Licensing}.
+    `Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions
+    are met:
+    
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    
+    * Neither the name of Kitware, Inc. nor the names of Contributors
+      may be used to endorse or promote products derived from this
+      software without specific prior written permission'~\shortcite{CMake-Documentation}{Licensing}.
 
     Das GROMACS Projekt steht unter der GNU Lesser General Public License~\longcite{gromacs-git}{COPYING}.
 }
@@ -135,106 +137,53 @@
     Um Aufrufe von Funktionen aufzuzeichnen kann Score-P den verwendeten Compiler
     anweisen das Betreten und Verlassen dieser durch Aufrufe spezieller Funktionen
     zu markieren~\longcite{Score-P-Documentation}{Application Instrumentation}.
-
     Dabei ist zu beachten das die Namen der entstehenden Regionen und Art wie diese generiert
     werden von dem verwendeten Compiler abhängig ist.
-
     Dies ist besonders wichtig wenn die zu instrumentierende Anwendung in C++ geschrieben ist,
     weil einige Compiler kein Filtern der zu instrumentierenden Funktionen erlauben und C++
     Anwendungen häufig viele kleine Funktionen besitzen wessen Instrumentierung einen signifikanten
     Overhead erzeugen kann~\longcite{Score-P-Documentation}{Application Instrumentation}.
 
-    \paragraph{MPI Bibliotheksaufrufe}
-    Bei MPI handelt es sich um eine standardisierte Schnittstelle für den Nachrichtenaustausch
-    zwischen parallel ablaufenden Prozessen mit eigenen Adressbereichen~\longcite{mpi}{1}.
+    \paragraph{standardisierte Schnittstellen}
+    Viele der von Score-P unterstützten Technologien besitzen eine standardisierte Schnittstelle
+    welche dafür gedacht ist externen Programmen wie Score-P zum Überwachen und Messen einer Anwendung
+    Zugriff auf interne Events zu ermöglichen.
+    Zu den durch eine solche Schnittstelle unterstützten Technologien zählen MPI mit seinem
+    `Profiling Interface'~\shortcite{mpi}{717}, SHMEM mit einer ebenfalls
+    `Profiling Interface'~\shortcite{openshmem}{140} genannten Schnittstelle, OpenMP mit dem seit
+    Version 5.0 existierenden `OMPT Interface'~\shortcite{openmp}{419}, OpenACC mit seinem
+    `Profiling and Error Callback Interface'~\shortcite{openacc}{123}, CUDA mit seinem
+    `CUDA Profiling Tools Interface'~\shortcite{nvidia-docs}{CUPTI} und HIP welches durch eine in der
+    Score-P Dokumentation nicht näher erläuterte Schnittstelle unterstützt
+    wird~\longcite{Score-P-Documentation}{Application Measurement}.
 
-    Um Aufrufe von MPI Funktionen zu Erkennen und zu Messen wird dafür das im MPI Standard
-    spezifizierte `Profiling Interface'~\shortcite{mpi}{717} verwendet.
+    Zur Benutzung dieser Schnittstellen stellt Score-P Bibliotheken bereit gegen welche eine
+    zu instrumentierende Anwendung gelinkt werden
+    muss~\longcite{Score-P-Documentation}{Application Instrumentation, Application Measurement}.
 
-    Bei der Instrumentierung einer Anwendung wird dafür neben der MPI Implementierung zusätzlich
-    gegen eine von Score-P bereitgestellte Bibliothek gelinkt~\longcite{Score-P-Documentation}{Application Instrumentation}.
+    \paragraph{Library Wrapping}
+    Falls eine standardisierte Schnittstelle nicht existiert oder von Score-P nicht unterstützt wird
+    wird stattdessen auf ein `library wrapping' genanntes Verfahren zurückgegriffen falls die Schnittstelle
+    nur aus Bibliothekssymbolen besteht.
+    Dabei wird der zum Linken der zu instrumentierenden Anwendung verwendete Linker angewiesen Verweise
+    auf Bibliothekssymbole der Schnittstelle durch Verweise auf einen von Score-P bereitgestellten
+    Wrapper zu ersetzen, was es Score-P erlaubt Aufrufe der Bibliotheksfunktionen aufzuzeichnen.
 
-    \paragraph{SHMEM Bibliotheksaufrufe}
-    Bei SHMEM handelt es sich ebenfalls um eine standardisierte Schnittstelle, bei welcher jedoch
-    im Gegensatz zu MPI im Rahmen des `Partitioned Global Address Space' Paradigmas von einem
-    einzigen globalen Adressbereich ausgegangen wird welcher auf mehrere Ausführungseinheiten
-    verteilt sein kann und Datentransfers einseitig ablaufen~\longcite{openshmem}{1}.
+    Zu den auf diese Weise unterstützen Schnittstellen gehören Pthread (auch bekannt als POSIX Threads),
+    OpenCL und von POSIX, MPI und ISO C bereitgestellte Funktionen für
+    I/O~\longcite{Score-P-Documentation}{Application Instrumentation, Introduction}.
+    Zusätzlich können für eigene Bibliotheken Wrapper erstellt werden wenn das Instrumentieren dieser
+    nicht möglich oder anderweitig unerwünscht ist~\longcite{Score-P-Documentation}{Application Instrumentation}.
 
-    Um Aufrufe von SHMEM Funktionen zu Erkennen und zu Messen wird wie bei MPI auf ein standardisiertes
-    `Profiling Interface'~\shortcite{openshmem}{140} zugegriffen welches ein Linken gegen eine von
-    Score-P bereitgestellte Bibliothek erfordert~\longcite{Score-P-Documentation}{Application Instrumentation}.
-
-    \paragraph{OpenMP Direktiven und API Aufrufe}
-    OpenMP ist im Gegensatz zu den beiden vorherigen Technologien keine Bibliotheksschnittstelle
-    sondern eine API welche neben Funktionen auch aus Compilerdirektiven besteht.
-
-    Damit können Anwendungsentwickler Bereiche des Quellcode explizit zur parallelen Ausführung
-    innerhalb eines gemeinsamen Adressbereichs~\longcite{openmp}{23} markieren und die Umsetzung 
-    dem verwendeten Compiler überlassen.
-
-    Die Verwendung von Compilerdirektiven stellt jedoch auch eine Hürde bei der Instrumentierung dar
-    weil das Erkennen und Messen von Funktionsaufrufen nicht ausreicht um die komplette API abzudecken.
-
-    Eine der von Score-P verwendeten Lösungen stellt die Opari2 Komponente dar, welche den Quellcode der
-    zu instrumentierenden Anwendung analysiert und Aufrufe von Messfunktionen an bestimmten Stellen
-    einfügt~\longcite{Score-P-Documentation}{Introduction}.
-
-    Eine Alternative ist die Verwendung des `OMPT Interface'~\shortcite{openmp}{419}, welches eine
-    standardisierte Schnittstelle für die Interaktion mit einer OpenMP Implementierung darstellt.
-
-    Zwar kann dabei auf das Modifizieren von Quellcode und die dadurch entstehende Probleme verzichtet werden,
-    jedoch existiert die Schnittstelle erst seit OpenMP 5.0 und wird momentan (Stand 2024) noch nicht von
-    GCC, einer weit verbreiteten Compilersammlung, unterstützt~\cite{gomp}. 
-
-    \paragraph{Pthread Bibliotheksaufrufe}
-    Pthread, auch bekannt als POSIX Threads, ist die standardisierte Threadingbibliothek auf POSIX-
-    kompatiblen Betriebssystemen, welche von Score-P durch das Wrappen von Bibliothekssymbolen
-    beim Linken der zu instrumentieren Anwendung mit von Score-P bereitgestellten
-    Implementierungen Instrumentiert wird~\longcite{Score-P-Documentation}{Application Instrumentation}.
-
-    \paragraph{OpenCL Bibliotheksaufrufe}
-    Bei OpenCL handelt es sich wie bei MPI und SCHMEM um eine standardisierte Bibliotheksschnittstelle,
-    welche es Anwendungsentwicklern erlaubt Berechnungen auf verschiedene Hardware wie u.a. einer GPU
-    zu verteilen~\longcite{opencl}{2}.
-    
-    Dabei wird grundsätzlich von mehreren Adressbereichen ausgegangen~\longcite{openmp}{30}.
-
-    Das Instrumentieren wird wie bei Pthread durch das Wrappen von Bibliothekssymbolen beim
-    Linken ermöglicht.
-
-    \paragraph{OpenACC Direktiven und API Aufrufe}
-    Die API von OpenACC ähnelt der von OpenMP, weil der Anwendungsentwickler ebenfalls durch
-    Compilerdirektiven explizit Teile der Anwendung parallel ablaufen lassen kann.
-
-    Im Gegensatz zu OpenMP konzentriert sich OpenACC jedoch auf heterogene Hardware und besitzt
-    dementsprechend meistens keinen gemeinsamen Adressbereich, da die ausgeführten Programmteile
-    möglicherweise auf anderen Geräten laufen~\longcite{openacc}{11}.
-
-    Beim Instrumentieren von Anwendungen welche OpenACC unterstützen verwendet Score-P das
-    `Profiling and Error Callback Interface'~\shortcite{openacc}{123}, wofür wiederum gegen eine
-    von Score-P bereitgestellte Bibliothek gelinkt~\longcite{Score-P-Documentation}{Introduction}
-    werden muss.
-
-    \paragraph{CUDA}
-    CUDA ist eine vom Hersteller NVIDIA entwickelte Werkzeugsammlung welche es erlaubt GPU-basierte
-    Anwendungen zu entwickeln und auszuführen~\longcite{nvidia-docs}{CUDA}.
-
-    Score-P erlaubt das Aufzeichnen von Funktionsaufrufen der CUDA API und GPU Aktivitäten mit Hilfe des
-    `CUDA Profiling Tools Interface'~\shortcite{nvidia-docs}{CUPTI}~\longcite{Score-P-Documentation}{Application Measurement}.
-
-    \paragraph{HIP}
-    Bei HIP handelt es sich wie bei CUDA um eine Werkzeugsammlung für die Entwicklung von GPU-basierten
-    Anwendungen welche vom Hersteller AMD als Bestandteil der ROCm Plattform mit einem Fokus auf
-    Kompatibilität mit GPUs von sich selbst und NVIDIA entwickelt wurde~\longcite{rocm-docs}{HIP documentation}.
-
-    Wie bei CUDA unterstützt Score-P das Aufzeichnen von Funktionsaufrufen der ROCm API und GPU Aktivitäten,
-    wobei eine nicht näher spezifizierte Schnittstelle verwendet wird~\longcite{Score-P-Documentation}{Application Measurement}.
-
-    \paragraph{I/O}
-    Funktionsaufrufe von Funktionen bekannter I/O Schnittstellen können durch Score-P aufgezeichnet werden.
-
-    Dabei werden neben den bekannten POSIX Funktionen auch Funktionen der asynchronen POSIX Schnittstelle,
-    ISO C und MPI unterstützt~\longcite{Score-P-Documentation}{Introduction}.
+    \paragraph{Opari2}
+    Da das für OpenMP existierende `OMPT Interface'~\shortcite{openmp}{419} erst seit Version 5.0
+    existiert und noch nicht (Stand 2024) von GCC unterstützt~\cite{gomp} wird bietet Score-P eine
+    Alternative zum instrumentieren dieser Technologie an.
+    Dabei kann jedoch nicht auf Library Wrapping zurückgegriffen werden weil bei OpenMP
+    Compilerdirektiven im Quellcode zum Einsatz kommen.
+    Um dies zu umgehen verwendet Score-P eine `Opari2' genannte Komponente welche den Quellcode
+    der zu instrumentierenden Anwendung analysiert und Aufrufe von Score-P Messfunktionen an bestimmten
+    stellen einfügt~\longcite{Score-P-Documentation}{Introduction}.
 
     \subsubsection{Datenformate}
     Nach dem Instrumentieren einer Anwendung ermöglicht Score-P zwei Arten der Datenerfassung,
@@ -299,10 +248,9 @@
     über das aktuelle System gesammelt und die Projektbeschreibung evaluiert wird.
     Zusätzlich können Optionen deklariert werden welche es ermöglichen Einfluss auf den
     Konfigurationsprozess zu nehmen.
-    Anschlie{\ss}end wird mit den gesammelten Daten eine Konfiguration für ein plattformspezifisches Werkzeug
-    (wie u.a. Unix Makefiles oder Visual Studio~\longcite{CMake-Documentation}{cmake-generators(7)})
-    generiert welches das eigentliche Bauen des Projektes
-    übernimmt~\longcite{CMake-Documentation}{User Interaction Guide}.
+    Anschlie{\ss}end wird in der Generierungsphase mit den gesammelten Daten eine Konfiguration
+    für ein plattformspezifisches Werkzeug (wie u.a. Unix Makefiles oder Visual Studio~\longcite{CMake-Documentation}{cmake-generators(7)})
+    generiert welches das eigentliche Bauen des Projektes übernimmt~\longcite{CMake-Documentation}{User Interaction Guide}.
 
     \subsection{Projektbeschreibung}
     Die Projektbeschreibung ist in einer CMake spezifischen Sprache verfasst welche die Zeichenkette
@@ -324,16 +272,18 @@
     beim Linken anderer Programmteile verwendet werden können.
 
     \paragraph{\texttt{SHARED\_LIBRARY}} Targets repräsentieren dynamische Programmbibliotheken welche
-    neben dem Linken anderer Programmteile auch zur Laufzeit geladen werde kann.
+    neben dem Linken anderer Programmteile auch zur Laufzeit geladen werden können.
 
     \paragraph{\texttt{MODULE\_LIBRARY}} Targets repräsentieren dynamische Programmkomponenten welche
-    im Gegensatz zu Bibliotheken nur zur Laufzeit geladen werden.
+    im Gegensatz zu dynamischen Bibliotheken nur manuell zur Laufzeit durch den Benutzer geladen werden.
 
     \paragraph{\texttt{OBJECT\_LIBRARY}} Targets repräsentieren Mengen von bereits zu Objektcode
     kompilierten Quelltexten.
 
     \paragraph{\texttt{INTERFACE\_LIBRARY}} Targets repräsentieren Ausführungskonfigurationen welche andere
     Targets durch linken übernehmen können.
+    Ein Beispiel stellt das \texttt{MPI::MPI\_CXX} Target dar welches beim Linken die für die Verwendung
+    von MPI notwendigen Einstellungen auf andere Targets überträgt~\longcite{CMake-Documentation}{FindMPI}.
 
     \paragraph{\texttt{ALIAS}} Targets repräsentieren andere Targets und können im Gegensatz zu vielen
     anderen Targets nicht verändert werden.
@@ -880,14 +830,14 @@
         \end{center}
     \end{figure}
 
-    Aus den in Abbildung~\ref{fig:runtime} ermittelten Werten ist ersichtlich dass die Laufzeit superlinear
-    mit der Anzahl der Targets wächst, wobei der Prozentsatz der durch \texttt{scorep\_mark} markierten Targets
-    einen starken Einfluss auf deren Steigung besitzt.
-    Dies bedeutet dass bei sehr gro{\ss}en Projekten die benötigte Zeit zur Targetanalyse stark reduziert
-    werden kann indem man die Anzahl der zu instrumentierenden Targets einschränkt.
+    Aus den in Abbildung~\ref{fig:runtime} ermittelten Werten ist ersichtlich dass für die gewählte Struktur
+    des Beispielprojekts die Laufzeit linear mit der Anzahl der Targets wächst, wobei der Prozentsatz der
+    durch \texttt{scorep\_mark} markierten Targets einen merklichen Einfluss auf deren Steigung besitzt.
+    Dies bedeutet dass bei sehr gro{\ss}en Projekten die benötigte Zeit zur Targetanalyse reduziert werden
+    kann indem man die Anzahl der zu instrumentierenden Targets einschränkt.
     Messungen der benötigten Zeit zum Instrumentieren des GROMACS Projekts bestätigen diese Schlussfolgerung,
-    wobei die benötigte Zeit zum Instrumentieren aller 188 Targets des Projekts 9,14 Sekunden und beim
-    Ausschlie{\ss}en von 160 Targets welche Tests repräsentierten 2,03 Sekunden betrug.
+    wobei die benötigte Zeit zum Instrumentieren aller 188 Targets des Projekts 2,8 Sekunden und beim
+    Ausschlie{\ss}en von 160 Targets welche Tests repräsentierten 1,4 Sekunden betrug.
     Dabei ist anzumerken dass die restliche Konfiguration des Projekts ungefähr 26 Sekunden benötigte.
 
     \newpage
