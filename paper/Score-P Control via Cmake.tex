@@ -403,7 +403,7 @@
     \paragraph{\texttt{COMPILER}} repräsentiert die Unterstützung für Compilerinstrumentierung.
 
     \paragraph{\texttt{CUDA}} repräsentiert die Unterstützung für CUDA.
-    
+
     \paragraph{\texttt{OMP\_<SPRACHE>}} repräsentiert die Unterstützung von OpenMP für eine bestimmte Sprache.
 
     \paragraph{\texttt{OPARI2}} repräsentiert die Verfügbarkeit von Opari2.
@@ -509,7 +509,9 @@
     beim Konfigurieren des CMake Projekts nicht vollständig möglich ist.
     Wenn der Benutzer jedoch die Unvollständigkeit der Analyse für unproblematisch befindet
     kann diese optional verwendet werden um aus den Abhängigkeiten eines Targets seine Score-P
-    Einstellungen abzuleiten.
+    Einstellungen abzuleiten indem nach bekannten Targets gesucht wird welche für die Verwendung
+    einer Technologie benötigt werden, zum Beispiel linkt ein C++ Target welches MPI nutzt im Normalfall
+    gegen \texttt{MPI::MPI\_CXX}.
 
     Au{\ss}erdem muss eine mit den gewählten Befehlen kompatible Score-P Installation vor der Verwendung
     der Schnittstelle durch das Lokalisierungsmodul lokalisiert werden um den Speicherort des
@@ -593,6 +595,10 @@
     Mengen enthalten ist und für diese unterschiedliche Score-P Einstellungen ermittelt werden.
     Um dies zu verhindern werden Mengen welche sich zu instrumentierende Targets mit anderen
     Mengen teilen mit diesen vereint, wobei eine Union-Find-Datenstruktur zum Einsatz kommt.
+    Da es durch \texttt{ALIAS} Targets ein Target mehrere Namen besitzen kann und damit das Vorkommen
+    in mehreren Mengen übersehen werden kann wird beim Hinzufügen von Targets zu einer Menge überprüft
+    ob es sich dabei um ein Alias handelt und falls dies zutrifft stattdessen das repräsentierte Target
+    der Menge hinzugefügt.
 
     \begin{figure}
         \begin{center}
