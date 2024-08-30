@@ -31,6 +31,12 @@ See [`UTILITIES.md`](docs/UTILITIES.md) and [`AUTODETECT.md`](docs/AUTODETECT.md
 
 See [`FINDMODULE.md`](docs/FINDMODULE.md)
 
+## Paper
+
+This project was created as part of a introductory seminar course, which produced a paper.
+
+Its source code and attachments can be found in the `paper` subdirectory.
+
 ## Tests
 
 Testing using the [CTest](https://cmake.org/cmake/help/latest/module/CTest.html)
@@ -51,6 +57,8 @@ The following labels exist:
  - `openacc`, indicating a test requiring OpenACC
 
  - `kokkos`, indicating a test requiring Kokkos with an enabled OpenMP backend
+
+ - `cuda`, indicating a test requiring CUDA
 
  - `boost`, indicating a test requiring certain boost components
 

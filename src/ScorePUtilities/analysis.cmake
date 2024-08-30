@@ -35,7 +35,7 @@ function(_scorep_unionfind_find prefix element result)
             break()
         else()
             # use path splitting
-            set("${prefix}_${root}_PARENT" "${${prefix}_${parent}_PARENT}")
+            set("${prefix}_${root}_PARENT" "${${prefix}_${parent}_PARENT}" PARENT_SCOPE)
             set(root "${parent}")
         endif()
     endwhile()
@@ -61,11 +61,23 @@ endfunction()
 function(_scorep_calculate_sets targets dependencies prefix result)
     set(sets "")
     foreach(target IN LISTS targets)
+        get_target_property(alias "${target}" ALIASED_TARGET)
+        if(NOT alias STREQUAL "alias-NOTFOUND")
+            # prevent immutable alias targets allowing a target to be
+            # in multiple sets at once and messing with instrumentation
+            set(target "${alias}")
+        endif()
         set(elements "")
         set(languages "")
         cmake_language(CALL "${dependencies}" "${target}" set)
         foreach(element IN LISTS set ITEMS "${target}")
             if(TARGET "${element}")
+                get_target_property(alias "${element}" ALIASED_TARGET)
+                if(NOT alias STREQUAL "alias-NOTFOUND")
+                    # prevent immutable alias targets allowing a target to be
+                    # in multiple sets at once and messing with instrumentation
+                    set(element "${alias}")
+                endif()
                 list(APPEND elements "${element}")
                 get_target_property(targetLanguages "${element}" SCOREP_LANGUAGES)
                 if(NOT targetLanguages STREQUAL "targetLanguages-NOTFOUND")
@@ -93,7 +105,7 @@ function(_scorep_global_dependencies target result)
     set("${result}" "${dependencies}" PARENT_SCOPE)
 endfunction()
 
-# Merge sets base don shared instrumented elements.
+# Merge sets based on shared instrumented elements.
 macro(_scorep_merge_sets unionfindPrefix setsVar prefixIn prefixOut result)
     foreach(set IN LISTS "${setsVar}")
         _scorep_unionfind_find("${unionfindPrefix}" "${set}" setFound)

@@ -1,11 +1,13 @@
 #include <iostream>
 #include <vector>
 #include <boost/program_options.hpp>
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include <driver_types.h>
 
 namespace options = boost::program_options;
 
-#pragma acc routine seq
-static unsigned long fibonacci(unsigned long element) {
+__device__ static unsigned long fibonacci(unsigned long element) {
     unsigned long a = 0;
     unsigned long b = 1;
     while (element > 0) {
@@ -17,14 +19,18 @@ static unsigned long fibonacci(unsigned long element) {
     return a;
 }
 
-static void calculate_elements(const unsigned int start, const unsigned int step, std::vector<unsigned long>* buffer) {
-    unsigned int count = buffer->size();
-    unsigned long* data = buffer->data();
-    #pragma acc parallel copyout(data[0:count])
-    #pragma acc loop
-    for (unsigned int index = 0; index < count; index++) {
-        data[index] = fibonacci(start + index * step);
+__global__ static void kernel(const unsigned int start, const unsigned int step, const unsigned int count, unsigned long* buffer) {
+    for (unsigned int index = threadIdx.x; index < count; index += blockDim.x) {
+        buffer[index] = fibonacci(start + index * step);
     }
+}
+
+static void calculate_elements(const unsigned int start, const unsigned int step, std::vector<unsigned long>* buffer) {
+    unsigned long* device_buffer;
+    cudaMalloc(&device_buffer, sizeof(unsigned long) * buffer->size());
+    kernel<<<1,256>>>(start, step, buffer->size(), device_buffer);
+    cudaMemcpy(buffer->data(), device_buffer, sizeof(unsigned long) * buffer->size(), cudaMemcpyDeviceToHost);
+    cudaFree(device_buffer);
 }
 
 static void print_elements(const unsigned int start, const unsigned int step, std::vector<unsigned long>* buffer) {
@@ -57,7 +63,7 @@ int main(int argc, char** argv) {
         auto parsed = options::command_line_parser(argc, argv).options(desc).positional(positionals).style(options::command_line_style::unix_style).run();
         options::store(parsed, arguments);
         if (arguments.count("help")) {
-            std::cout << "OpenMP example which calculates elements of the fibonacci sequence" << "\n\n";
+            std::cout << "CUDA example which calculates elements of the fibonacci sequence" << "\n\n";
             std::cout << "Usage: fibonacci [OPTIONS] [start step count]" << "\n";
             std::cout << desc << "\n";
             return 0;

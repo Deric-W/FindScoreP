@@ -1,11 +1,16 @@
 #include <iostream>
 #include <vector>
 #include <boost/program_options.hpp>
+#ifdef SCOREP_USER_ENABLE
+#include <scorep/SCOREP_User.h>
+#endif
 
 namespace options = boost::program_options;
 
-#pragma acc routine seq
 static unsigned long fibonacci(unsigned long element) {
+    #ifdef SCOREP_USER_ENABLE
+    SCOREP_USER_REGION("fibonacci function", SCOREP_USER_REGION_TYPE_FUNCTION)
+    #endif
     unsigned long a = 0;
     unsigned long b = 1;
     while (element > 0) {
@@ -18,12 +23,11 @@ static unsigned long fibonacci(unsigned long element) {
 }
 
 static void calculate_elements(const unsigned int start, const unsigned int step, std::vector<unsigned long>* buffer) {
-    unsigned int count = buffer->size();
-    unsigned long* data = buffer->data();
-    #pragma acc parallel copyout(data[0:count])
-    #pragma acc loop
-    for (unsigned int index = 0; index < count; index++) {
-        data[index] = fibonacci(start + index * step);
+    #ifdef SCOREP_USER_ENABLE
+    SCOREP_USER_REGION("calculate_elements function", SCOREP_USER_REGION_TYPE_FUNCTION)
+    #endif
+    for (unsigned int index = 0; index < buffer->size(); index++) {
+        (*buffer)[index] = fibonacci(start + index * step);
     }
 }
 
@@ -57,7 +61,7 @@ int main(int argc, char** argv) {
         auto parsed = options::command_line_parser(argc, argv).options(desc).positional(positionals).style(options::command_line_style::unix_style).run();
         options::store(parsed, arguments);
         if (arguments.count("help")) {
-            std::cout << "OpenMP example which calculates elements of the fibonacci sequence" << "\n\n";
+            std::cout << "Example which calculates elements of the fibonacci sequence" << "\n\n";
             std::cout << "Usage: fibonacci [OPTIONS] [start step count]" << "\n";
             std::cout << desc << "\n";
             return 0;

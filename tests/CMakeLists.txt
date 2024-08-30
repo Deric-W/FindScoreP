@@ -44,6 +44,10 @@ add_test(
     ${TEST_ARGUMENTS}
     "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
     "-DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=OFF"
+    "-DCMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH=OFF"
+    "-DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=OFF"
+    "-DCMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY=OFF"
+    "-DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF"
     -P "${CMAKE_CURRENT_LIST_DIR}/find_scorep.cmake"
 )
 set_property(TEST "Test missing Score-P installation" PROPERTY WILL_FAIL true)
@@ -52,8 +56,8 @@ set_property(TEST "Test missing Score-P installation" PROPERTY LABELS cmake)
 add_test(
     NAME "Test multiple installed versions"
     COMMAND "${CMAKE_COMMAND}" -E env
-    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestMultipleVersions/0.0.0.2"
-    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestMultipleVersions/0.0.0.3"
+    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestMultipleVersions/0.0.0.2/bin"
+    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestMultipleVersions/0.0.0.3/bin"
     "${CMAKE_COMMAND}"
     ${TEST_ARGUMENTS}
     "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
@@ -64,7 +68,7 @@ set_property(TEST "Test multiple installed versions" PROPERTY LABELS cmake)
 add_test(
     NAME "Test version range"
     COMMAND "${CMAKE_COMMAND}" -E env
-    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestMultipleVersions/0.0.0.3"
+    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestMultipleVersions/0.0.0.3/bin"
     "${CMAKE_COMMAND}"
     ${TEST_ARGUMENTS}
     "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
@@ -90,11 +94,11 @@ set_property(TEST "Test Score-P instrumentation during configure phase" PROPERTY
 add_test(
     NAME "Test handling of components"
     COMMAND "${CMAKE_COMMAND}" -E env
-    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestMultipleVersions/0.0.0.3"
+    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestComponents/0.0.0.1/bin"
     "${CMAKE_COMMAND}"
     ${TEST_ARGUMENTS}
     "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
-    -P "${CMAKE_CURRENT_LIST_DIR}/find_components.cmake"
+    -P "${CMAKE_CURRENT_LIST_DIR}/TestComponents/find_components.cmake"
 )
 set_property(TEST "Test handling of components" PROPERTY LABELS cmake)
 
@@ -181,6 +185,34 @@ add_test(
 )
 set_property(TEST "Test including the module in script mode" PROPERTY LABELS cmake)
 
+add_test(
+    NAME "Test handling of Alias Targets"
+    COMMAND "${CMAKE_COMMAND}" -E env
+    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestAliasTargets/0.0.0.1/bin"
+    "${CMAKE_COMMAND}"
+    ${TEST_ARGUMENTS}
+    --fresh
+    "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+    -S "${CMAKE_CURRENT_LIST_DIR}/TestAliasTargets"
+    -B "${temporaryDir}/TestAliasTargets"
+)
+set_property(TEST "Test handling of Alias Targets" PROPERTY FIXTURES_REQUIRED tmpdir)
+set_property(TEST "Test handling of Alias Targets" PROPERTY LABELS c)
+
+add_test(
+    NAME "Test AUTO argument"
+    COMMAND "${CMAKE_COMMAND}" -E env
+    --modify "PATH=path_list_append:${CMAKE_CURRENT_LIST_DIR}/TestAuto/0.0.0.1/bin"
+    "${CMAKE_COMMAND}"
+    ${TEST_ARGUMENTS}
+    --fresh
+    "-DCMAKE_MODULE_PATH=${CMAKE_SOURCE_DIR}/src"
+    -S "${CMAKE_CURRENT_LIST_DIR}/TestAuto"
+    -B "${temporaryDir}/TestAuto"
+)
+set_property(TEST "Test AUTO argument" PROPERTY FIXTURES_REQUIRED tmpdir)
+set_property(TEST "Test AUTO argument" PROPERTY LABELS c openmp)
+
 function(_add_example_tests example labels)
     add_test(
         NAME "Test ${example} example without Score-P"
@@ -214,3 +246,5 @@ _add_example_tests(openmp "openmp;boost")
 _add_example_tests(pthread "pthread;boost")
 _add_example_tests(openacc "openacc;boost")
 _add_example_tests(kokkos "kokkos;boost")
+_add_example_tests("user instrumentation" "boost")
+_add_example_tests(cuda "cuda;boost")

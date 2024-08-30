@@ -33,14 +33,10 @@ endfunction()
 
 # Infers Score-P arguments for instrumenting a specific language of a target.
 function(scorep_infer_arguments target language arguments result)
-    _scorep_arguments2settings("${arguments}" 100 ARGUMENT)
-    _scorep_environment2settings("${language}" 1500 INFERRED)
-    _scorep_merge_settings(ARGUMENT INFERRED ARGUMENT)
     _scorep_determine_link_closure("${target}" _scorep_all_visitor _scorep_all_visitor dependencies)
-    foreach(dependency ${dependencies})
-        _scorep_link_dependency2settings("${dependency}" "${language}" 1500 INFERRED)
-        _scorep_merge_settings(ARGUMENT INFERRED ARGUMENT)
-    endforeach()
+    _scorep_infer_settings("${language}" INFERRED "${dependencies}")
+    _scorep_arguments2settings("${arguments}" 100 ARGUMENT)
+    _scorep_merge_settings(ARGUMENT INFERRED ARGUMENT)
     _scorep_settings2arguments(ARGUMENT arguments)
     set("${result}" "${arguments}" PARENT_SCOPE)
 endfunction()
@@ -178,7 +174,7 @@ function(scorep_instrument targets)
             if (NOT (ARG_OVERRIDE OR existingLauncher STREQUAL "existingLauncher-NOTFOUND"))
                 message(
                     FATAL_ERROR
-                    "Score-P: target ${target} has ${lang}_COMPILER_LAUNCHER already set to ${existingLauncher}"
+                    "Score-P: target ${target} has ${lang}_COMPILER_LAUNCHER already set to ${existingLauncher} "
                     "Please check that the target in not already instrumented by something or unset the property."
                 )
             endif()
@@ -186,7 +182,7 @@ function(scorep_instrument targets)
             if (NOT (ARG_OVERRIDE OR existingLauncher STREQUAL "existingLauncher-NOTFOUND"))
                 message(
                     FATAL_ERROR
-                    "Score-P: target ${target} has ${lang}_LINKER_LAUNCHER already set to ${existingLauncher}"
+                    "Score-P: target ${target} has ${lang}_LINKER_LAUNCHER already set to ${existingLauncher} "
                     "Please check that the target in not already instrumented by something or unset the property."
                 )
             endif()
@@ -196,12 +192,8 @@ function(scorep_instrument targets)
                 set(arguments ${ARG_ARGUMENTS})
             endif()
             if(ARG_AUTO)
-                _scorep_environment2settings("${lang}" 1500 INFERRED)
+                _scorep_infer_settings("${lang}" INFERRED "${dependencies}")
                 _scorep_merge_settings(ARGUMENT INFERRED TARGET_ARGUMENT)
-                foreach(dependency ${dependencies})
-                    _scorep_link_dependency2settings("${dependency}" "${lang}" 1500 INFERRED)
-                    _scorep_merge_settings(TARGET_ARGUMENT INFERRED TARGET_ARGUMENT)
-                endforeach()
                 _scorep_settings2arguments(TARGET_ARGUMENT targetLauncher)
                 list(PREPEND targetLauncher "${scorep}")
             else()
@@ -242,31 +234,21 @@ function(scorep_mark mode targets)
     endif()
     _scorep_arguments2settings("${ARG_ARGUMENTS}" "${ARG_PRIORITY}" ARGUMENT)
 
-    foreach(target ${targets})
-        if(ARG_AUTO)
-            _scorep_determine_link_closure("${target}" _scorep_all_visitor _scorep_all_visitor dependencies)
-        endif()
-        foreach(lang ${ARG_LANGS})
+    foreach(target IN LISTS targets)
+        get_target_property(imported "${target}" IMPORTED)
+        get_target_property(aliased "${target}" ALIASED_TARGET)
+        if(imported)
+            message(WARNING "Score-P: imported target '${target}' can not be instrumented or marked")
+        elseif(aliased)
+            message(WARNING "Score-P: alias target '${target}' can not be instrumented or marked")
+        else()
             if(ARG_AUTO)
-                _scorep_environment2settings("${lang}" 1500 INFERRED)
-                _scorep_merge_settings(ARGUMENT INFERRED TARGET_ARGUMENT)
-                foreach(dependency ${dependencies})
-                    _scorep_link_dependency2settings("${dependency}" "${lang}" 1500 INFERRED)
-                    _scorep_merge_settings(TARGET_ARGUMENT INFERRED TARGET_ARGUMENT)
-                endforeach()
-                _scorep_settings2properties(TARGET_ARGUMENT "${lang}" "${target}")
-            else()
-                _scorep_settings2properties(ARGUMENT "${lang}" "${target}")
+                set_property(TARGET "${target}" APPEND PROPERTY SCOREP_AUTO_LANGUAGES ${ARG_LANGS})
             endif()
-        endforeach()
-        if(mode STREQUAL "INSTRUMENT")
-            get_target_property(imported "${target}" IMPORTED)
-            get_target_property(aliased "${target}" ALIASED_TARGET)
-            if(imported)
-                message(WARNING "Score-P: imported target '${target}' can not be instrumented")
-            elseif(aliased)
-                message(WARNING "Score-P: alias target '${target}' can not be instrumented")
-            else()
+            foreach(lang IN LISTS ARG_LANGS)
+                _scorep_settings2properties(ARGUMENT "${lang}" "${target}")
+            endforeach()
+            if(mode STREQUAL "INSTRUMENT")
                 set_property(TARGET "${target}" APPEND PROPERTY SCOREP_LANGUAGES ${ARG_LANGS})
             endif()
         endif()
@@ -310,6 +292,23 @@ function(scorep_determine_instrumentations targets)
     _scorep_calculate_sets("${standaloneTargets}" _scorep_global_dependencies TMP sets)
     _scorep_merge_sets(UNIONFIND sets TMP GLOBALSET globalSets)
 
+    # perform automatic detection of Score-P arguments on global sets to check all targets
+    foreach(globalSet IN LISTS globalSets)
+        foreach(target IN LISTS "GLOBALSET_${globalSet}_ELEMENTS")
+            get_target_property(autoLangs "${target}" SCOREP_AUTO_LANGUAGES)
+            if(NOT (autoLangs STREQUAL "autoLangs-NOTFOUND" OR autoLangs STREQUAL ""))
+                _scorep_determine_link_closure("${target}" _scorep_all_visitor _scorep_all_visitor dependencies)
+                list(REMOVE_DUPLICATES autoLangs)
+                foreach(lang IN LISTS autoLangs)
+                    _scorep_infer_settings("${lang}" INFERRED "${dependencies}")
+                    _scorep_properties2settings(ARGUMENT "${lang}" "${target}")
+                    _scorep_merge_settings(ARGUMENT INFERRED ARGUMENT)
+                    _scorep_settings2properties(ARGUMENT "${lang}" "${target}")
+                endforeach()
+            endif()
+        endforeach()
+    endforeach()
+
     # calculate global set settings
     foreach(globalSet IN LISTS globalSets)
         foreach(setting IN LISTS _SCOREP_FLAG_SETTINGS _SCOREP_CHOICE_SETTINGS _SCOREP_UNION_SETTINGS)
@@ -331,28 +330,31 @@ function(scorep_determine_instrumentations targets)
         # find the global set of this local set
         _scorep_unionfind_find(UNIONFIND "${localSet}" found)
 
-        # calculate language specific arguments
+        # calculate settings for all languages
+        foreach(setting IN LISTS _SCOREP_FLAG_SETTINGS _SCOREP_CHOICE_SETTINGS _SCOREP_UNION_SETTINGS)
+            # inherit global settings
+            set("LOCAL_${setting}" "${GLOBAL_${found}_${setting}}")
+        endforeach()
         foreach(language IN LISTS "LOCALSET_${localSet}_LANGUAGES")
-            foreach(setting IN LISTS _SCOREP_FLAG_SETTINGS _SCOREP_CHOICE_SETTINGS _SCOREP_UNION_SETTINGS)
-                # inherit global settings
-                set("LANGUAGE_${setting}" "${GLOBAL_${found}_${setting}}")
-            endforeach()
             foreach(dependency IN LISTS "LOCALSET_${localSet}_ELEMENTS")
                 _scorep_properties2settings(DEPENDENCY "${language}" "${dependency}")
-                # standalone settings where already merged by the global settings
+                # notstandalone settings where already merged by the global settings
                 foreach(setting IN LISTS _SCOREP_NOTSTANDALONE_FLAG_SETTINGS _SCOREP_NOTSTANDALONE_CHOICE_SETTINGS _SCOREP_NOTSTANDALONE_UNION_SETTINGS)
                     set("DEPENDENCY_${setting}" "")
                 endforeach()
-                _scorep_merge_settings(LANGUAGE DEPENDENCY LANGUAGE)
+                _scorep_merge_settings(LOCAL DEPENDENCY LOCAL)
             endforeach()
-
-            _scorep_settings2arguments(LANGUAGE "arguments_${language}")
-            if(ARG_COMPONENTS_VAR)
-                scorep_arguments2components("${arguments_${language}}" "${language}" targetComponents)
-                list(APPEND components ${targetComponents})
-                list(REMOVE_DUPLICATES components)
-            endif()
         endforeach()
+
+        # generate Score-P arguments
+        _scorep_settings2arguments(LOCAL arguments)
+        if(ARG_COMPONENTS_VAR)
+            foreach(language IN LISTS "LOCALSET_${localSet}_LANGUAGES")
+                scorep_arguments2components("${arguments}" "${language}" localComponents)
+                list(APPEND components ${localComponents})
+                list(REMOVE_DUPLICATES components)
+            endforeach()
+        endif()
 
         # instrument local set
         foreach(target IN LISTS "LOCALSET_${localSet}_ELEMENTS")
@@ -364,10 +366,10 @@ function(scorep_determine_instrumentations targets)
                         set_target_properties(
                             "${target}"
                             PROPERTIES "SCOREP_${language}_ARGUMENTS"
-                            "${arguments_${language}}"
+                            "${arguments}"
                         )
-                    elseif(NOT targetArguments STREQUAL "${arguments_${language}}")
-                        message(FATAL_ERROR "Score-P: target ${target} has SCOREP_${language}_ARGUMENTS already set to '${targetArguments}' instead of '${arguments_${language}}'")
+                    elseif(NOT targetArguments STREQUAL "${arguments}")
+                        message(FATAL_ERROR "Score-P: target ${target} has SCOREP_${language}_ARGUMENTS already set to '${targetArguments}' instead of '${arguments}'")
                     endif()
                 endforeach()
             endif()

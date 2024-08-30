@@ -9,3 +9,12 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+paper/*
+!paper/*.tex
+!paper/*.cls
+!paper/*.bib
+!paper/*.bst
+!paper/graphics/
+!paper/patches/
+!paper/BenchmarkProject/
+!paper/README.md
