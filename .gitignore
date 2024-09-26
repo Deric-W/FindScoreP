@@ -18,3 +18,4 @@ paper/*
 !paper/patches/
 !paper/BenchmarkProject/
 !paper/README.md
+!paper/presentation.pptx
