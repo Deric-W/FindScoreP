@@ -2,6 +2,8 @@
 
 CMake integration for [Score-P](https://score-p.org).
 
+This is the old repository, future development happens in [score-p/scorep_cmake](https://github.com/score-p/scorep_cmake).
+
 ## Usage
 
 1. Place the contents of the `src` directory somewhere in your
